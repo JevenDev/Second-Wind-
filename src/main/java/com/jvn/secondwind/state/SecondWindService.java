@@ -188,6 +188,22 @@ public final class SecondWindService {
         };
     }
 
+    public static int getCooldownRemainingSeconds(ServerPlayer player) {
+        SecondWindPlayerState state = getState(player);
+        return switch (SecondWindConfig.COOLDOWN_MODE.get()) {
+            case NONE -> 0;
+            case TIMED -> {
+                long millisRemaining = Math.max(0L, state.getCooldownExpiresEpochMillis() - System.currentTimeMillis());
+                long ticksRemaining = Math.max(0L, state.getCooldownExpiresGameTime() - player.serverLevel().getGameTime());
+                yield (int) Math.max((millisRemaining + 999L) / 1000L, (ticksRemaining + TICKS_PER_SECOND - 1L) / TICKS_PER_SECOND);
+            }
+            case MC_DAY -> isCooldownActive(player)
+                    ? (int) (Math.max(1L, TICKS_PER_MC_DAY - player.serverLevel().getDayTime() % TICKS_PER_MC_DAY) / TICKS_PER_SECOND)
+                    : 0;
+            case ON_SLEEP -> state.hasConsumedSinceSleep() ? -1 : 0;
+        };
+    }
+
     public static void resetCooldownForSleep(ServerPlayer player) {
         SecondWindPlayerState state = getState(player);
         state.setConsumedSinceSleep(false);

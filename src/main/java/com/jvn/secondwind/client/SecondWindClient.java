@@ -5,6 +5,7 @@ import com.jvn.secondwind.network.SecondWindNetworking;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -65,5 +66,9 @@ public final class SecondWindClient {
     private static void resetGiveUpHold() {
         giveUpHeldTicks = 0;
         giveUpSent = false;
+    }
+
+    public static Component giveUpKeyName() {
+        return giveUpKey == null ? Component.literal("R") : giveUpKey.getTranslatedKeyMessage();
     }
 }
