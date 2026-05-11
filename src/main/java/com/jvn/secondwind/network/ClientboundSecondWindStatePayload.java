@@ -12,7 +12,8 @@ public record ClientboundSecondWindStatePayload(
         int maxTicks,
         boolean giveUpAvailable,
         float reviveProgress,
-        int cooldownSeconds) implements CustomPacketPayload {
+        int cooldownSeconds,
+        boolean showReviveFlash) implements CustomPacketPayload {
     public static final Type<ClientboundSecondWindStatePayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "state"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundSecondWindStatePayload> STREAM_CODEC =
@@ -25,6 +26,7 @@ public record ClientboundSecondWindStatePayload(
         buffer.writeBoolean(payload.giveUpAvailable);
         buffer.writeFloat(payload.reviveProgress);
         buffer.writeVarInt(payload.cooldownSeconds);
+        buffer.writeBoolean(payload.showReviveFlash);
     }
 
     private static ClientboundSecondWindStatePayload read(RegistryFriendlyByteBuf buffer) {
@@ -34,7 +36,8 @@ public record ClientboundSecondWindStatePayload(
                 buffer.readVarInt(),
                 buffer.readBoolean(),
                 buffer.readFloat(),
-                buffer.readVarInt());
+                buffer.readVarInt(),
+                buffer.readBoolean());
     }
 
     @Override

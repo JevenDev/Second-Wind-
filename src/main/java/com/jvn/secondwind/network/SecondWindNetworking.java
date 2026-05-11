@@ -11,7 +11,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class SecondWindNetworking {
-    private static final String NETWORK_VERSION = "1";
+    private static final String NETWORK_VERSION = "2";
 
     private SecondWindNetworking() {
     }
@@ -23,6 +23,10 @@ public final class SecondWindNetworking {
     }
 
     public static void syncToPlayer(ServerPlayer player) {
+        syncToPlayer(player, false);
+    }
+
+    public static void syncToPlayer(ServerPlayer player, boolean showReviveFlash) {
         SecondWindPlayerState state = SecondWindService.getState(player);
         int cooldownSeconds = SecondWindService.getCooldownRemainingSeconds(player);
         PacketDistributor.sendToPlayer(player, new ClientboundSecondWindStatePayload(
@@ -31,7 +35,8 @@ public final class SecondWindNetworking {
                 state.getDownedMaxTicks(),
                 state.isDowned(),
                 state.getReviveChannelProgress(),
-                cooldownSeconds));
+                cooldownSeconds,
+                showReviveFlash));
     }
 
     public static void sendGiveUpRequest() {

@@ -61,7 +61,7 @@ public final class SecondWindService {
         state.incrementDownPenaltyCount();
         applyReviveHealthAndEffects(player);
         applyCooldown(player);
-        SecondWindNetworking.syncToPlayer(player);
+        SecondWindNetworking.syncToPlayer(player, true);
     }
 
     public static void failDowned(ServerPlayer player, FailureReason reason) {
@@ -250,10 +250,21 @@ public final class SecondWindService {
     public static void handleUnsafeExitIfNeeded(ServerPlayer player) {
         SecondWindPlayerState state = getState(player);
         if (state.hasPendingUnsafeExitCooldown()) {
-            state.clearDownedRuntime();
-            state.incrementDownPenaltyCount();
-            applyCooldown(player);
+            state.setPendingUnsafeExitCooldown(false);
+            failAndKill(player, FailureReason.LOGOUT_WHILE_DOWNED);
         }
+    }
+
+    public static void markUnsafeExitWhileDowned(ServerPlayer player) {
+        SecondWindPlayerState state = getState(player);
+        if (!state.isDowned()) {
+            return;
+        }
+
+        state.clearDownedRuntime();
+        clearDownedMobilityEffects(player);
+        state.setForcedDeathFlow(false);
+        state.setPendingUnsafeExitCooldown(true);
     }
 
     public static boolean applyDownedDamageToTimer(ServerPlayer player, float damageAmount) {

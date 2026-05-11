@@ -87,8 +87,7 @@ public final class SecondWindServerEvents {
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && SecondWindService.isDowned(player)) {
-            SecondWindService.failDowned(player, FailureReason.LOGOUT_WHILE_DOWNED);
-            SecondWindService.getState(player).setForcedDeathFlow(false);
+            SecondWindService.markUnsafeExitWhileDowned(player);
         }
     }
 

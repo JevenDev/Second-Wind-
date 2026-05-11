@@ -2,18 +2,39 @@ package com.jvn.secondwind.client.hud;
 
 import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.client.ClientSecondWindState;
-import com.jvn.secondwind.client.SecondWindClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
+import java.util.Locale;
+
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)
 public final class SecondWindHud {
+    private static final ResourceLocation LAST_STAND_BAR_BASE = ResourceLocation.fromNamespaceAndPath(
+            SecondWindMod.MOD_ID,
+            "gui/hud/last_stand_bar_base.png");
+    private static final ResourceLocation LAST_STAND_BAR_FILL = ResourceLocation.fromNamespaceAndPath(
+            SecondWindMod.MOD_ID,
+            "gui/hud/last_stand_bar_fill.png");
+    private static final ResourceLocation LAST_STAND_OVERLAY = ResourceLocation.fromNamespaceAndPath(
+            SecondWindMod.MOD_ID,
+            "gui/hud/last_stand_overlay.png");
+    private static final int LAST_STAND_WIDTH = 168;
+    private static final int LAST_STAND_HEIGHT = 31;
+    private static final int LAST_STAND_FILL_LEFT = 17;
+    private static final int LAST_STAND_FILL_WIDTH = 150;
+    private static final int LAST_STAND_HOTBAR_GAP = 32;
+    private static final int LAST_STAND_TIMER_CENTER_X = 153;
+    private static final int LAST_STAND_TIMER_CENTER_Y = 5;
+    private static final int LAST_STAND_TIMER_RED_TICKS = 100;
+
     private SecondWindHud() {
     }
 
@@ -30,30 +51,12 @@ public final class SecondWindHud {
         }
 
         GuiGraphics graphics = event.getGuiGraphics();
-        Font font = minecraft.font;
         int width = minecraft.getWindow().getGuiScaledWidth();
         int height = minecraft.getWindow().getGuiScaledHeight();
-        int centerX = width / 2;
-        int centerY = height / 2 - 44;
-        int seconds = (int) Math.ceil(ClientSecondWindState.ticksRemaining() / 20.0D);
-        int urgency = ClientSecondWindState.ticksRemaining() <= 60 ? 0xFFFF4040 : 0xFFFFF2D0;
+        int x = width / 2 - LAST_STAND_WIDTH / 2;
+        int y = height - 22 - LAST_STAND_HEIGHT - LAST_STAND_HOTBAR_GAP;
 
-        graphics.fill(centerX - 112, centerY - 12, centerX + 112, centerY + 70, 0x99000000);
-        graphics.drawCenteredString(font, Component.literal("FIGHT FOR YOUR LIFE"), centerX, centerY, 0xFFFF4040);
-        graphics.drawCenteredString(font, Component.literal(seconds + "s"), centerX, centerY + 16, urgency);
-        graphics.drawCenteredString(font, Component.literal("Kill an enemy to revive"), centerX, centerY + 34, 0xFFFFFFFF);
-        graphics.drawCenteredString(font, Component.literal("Another player can revive you"), centerX, centerY + 46, 0xFFB7E2FF);
-
-        if (ClientSecondWindState.reviveProgress() > 0.0F) {
-            int barWidth = 140;
-            int filled = Math.round(barWidth * ClientSecondWindState.reviveProgress());
-            graphics.fill(centerX - barWidth / 2, centerY + 59, centerX + barWidth / 2, centerY + 63, 0xFF333333);
-            graphics.fill(centerX - barWidth / 2, centerY + 59, centerX - barWidth / 2 + filled, centerY + 63, 0xFF61D394);
-        } else if (ClientSecondWindState.giveUpAvailable()) {
-            graphics.drawCenteredString(font, Component.literal("Hold ")
-                    .append(SecondWindClient.giveUpKeyName())
-                    .append(" to Give Up"), centerX, centerY + 58, 0xFFB8B8B8);
-        }
+        renderLastStandTimer(graphics, x, y);
     }
 
     private static void renderReviveFlash(RenderGuiEvent.Post event) {
@@ -70,5 +73,59 @@ public final class SecondWindHud {
         int alpha = Math.min(255, ticks * 8);
         int color = alpha << 24 | 0x61D394;
         graphics.drawCenteredString(font, Component.literal("SECOND WIND"), width / 2, height / 2 - 28, color);
+    }
+
+    private static void renderLastStandTimer(GuiGraphics graphics, int x, int y) {
+        Font font = Minecraft.getInstance().font;
+        float displayedTicksRemaining = ClientSecondWindState.displayedTicksRemaining();
+        float timerProgress = ClientSecondWindState.maxTicks() <= 0
+                ? 0.0F
+                : Mth.clamp(displayedTicksRemaining / ClientSecondWindState.maxTicks(), 0.0F, 1.0F);
+        int fillWidth = Mth.clamp(Mth.floor(timerProgress * LAST_STAND_FILL_WIDTH), 0, LAST_STAND_FILL_WIDTH);
+        String timerLabel = String.format(Locale.ROOT, "%.1fs", displayedTicksRemaining / 20.0F);
+        int timerColor = displayedTicksRemaining <= LAST_STAND_TIMER_RED_TICKS ? 0xFFFF4040 : 0xFFFFFFFF;
+
+        graphics.pose().pushPose();
+        graphics.pose().translate(0.0F, 0.0F, 0.0F);
+        graphics.blit(LAST_STAND_BAR_BASE, x, y, 0.0F, 0.0F, LAST_STAND_WIDTH, LAST_STAND_HEIGHT, LAST_STAND_WIDTH, LAST_STAND_HEIGHT);
+        if (fillWidth > 0) {
+            graphics.blit(
+                    LAST_STAND_BAR_FILL,
+                    x + LAST_STAND_FILL_LEFT,
+                    y,
+                    LAST_STAND_FILL_LEFT,
+                    0.0F,
+                    fillWidth,
+                    LAST_STAND_HEIGHT,
+                    LAST_STAND_WIDTH,
+                    LAST_STAND_HEIGHT);
+        }
+        graphics.blit(LAST_STAND_OVERLAY, x, y, 0.0F, 0.0F, LAST_STAND_WIDTH, LAST_STAND_HEIGHT, LAST_STAND_WIDTH, LAST_STAND_HEIGHT);
+        drawOutlinedCenteredString(
+                graphics,
+                font,
+                timerLabel,
+                x + LAST_STAND_TIMER_CENTER_X,
+                y + LAST_STAND_TIMER_CENTER_Y,
+                timerColor,
+                0xFF000000);
+        graphics.pose().popPose();
+    }
+
+    private static void drawOutlinedCenteredString(
+            GuiGraphics graphics,
+            Font font,
+            String text,
+            int centerX,
+            int centerY,
+            int color,
+            int outlineColor) {
+        int textX = centerX - font.width(text) / 2;
+        int textY = centerY - font.lineHeight / 2;
+        graphics.drawString(font, text, textX - 1, textY, outlineColor, false);
+        graphics.drawString(font, text, textX + 1, textY, outlineColor, false);
+        graphics.drawString(font, text, textX, textY - 1, outlineColor, false);
+        graphics.drawString(font, text, textX, textY + 1, outlineColor, false);
+        graphics.drawString(font, text, textX, textY, color, false);
     }
 }
