@@ -2,6 +2,7 @@ package com.jvn.secondwind;
 
 import com.mojang.logging.LogUtils;
 import com.jvn.secondwind.config.SecondWindConfig;
+import com.jvn.secondwind.state.SecondWindData;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -14,6 +15,7 @@ public final class SecondWindMod {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public SecondWindMod(IEventBus modEventBus, ModContainer modContainer) {
+        SecondWindData.ATTACHMENT_TYPES.register(modEventBus);
         modContainer.registerConfig(ModConfig.Type.COMMON, SecondWindConfig.SPEC);
     }
 }
