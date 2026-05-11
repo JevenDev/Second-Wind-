@@ -9,6 +9,7 @@ import com.jvn.secondwind.state.SecondWindPlayerState;
 import com.jvn.secondwind.state.SecondWindService;
 import com.jvn.secondwind.util.SecondWindEntityRules;
 import java.util.Optional;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -27,6 +28,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID)
 public final class SecondWindServerEvents {
     private static final float DOWNED_SAFE_HEALTH = 1.0F;
+    private static final int DOWNED_ANNOUNCEMENT_VARIANTS = 7;
 
     private SecondWindServerEvents() {
     }
@@ -59,7 +61,14 @@ public final class SecondWindServerEvents {
             player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 0.8F, 0.6F);
         }
 
+        announcePlayerDowned(player);
         SecondWindNetworking.syncToPlayer(player);
+    }
+
+    private static void announcePlayerDowned(ServerPlayer player) {
+        int variant = player.getRandom().nextInt(DOWNED_ANNOUNCEMENT_VARIANTS);
+        Component message = Component.translatable("message.secondwind.downed." + variant, player.getDisplayName());
+        player.server.getPlayerList().broadcastSystemMessage(message, false);
     }
 
     private static void handleKillToRevive(LivingDeathEvent event) {

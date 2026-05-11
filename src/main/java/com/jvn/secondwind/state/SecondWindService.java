@@ -18,6 +18,9 @@ public final class SecondWindService {
     public static final long TICKS_PER_MC_DAY = 24000L;
     private static final int DOWNED_SLOWNESS_REFRESH_TICKS = 10;
     private static final int REVIVE_HOLD_GRACE_TICKS = 2;
+    private static final int PLAYER_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
+    private static final int KILL_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
+    private static final int ADMIN_REVIVE_ANNOUNCEMENT_VARIANTS = 2;
 
     private SecondWindService() {
     }
@@ -65,6 +68,7 @@ public final class SecondWindService {
         state.incrementDownPenaltyCount();
         applyReviveHealthAndEffects(player);
         applyCooldown(player);
+        announcePlayerRevived(player, reason);
         SecondWindNetworking.syncToPlayer(player, true);
     }
 
@@ -324,6 +328,22 @@ public final class SecondWindService {
 
     private static long currentMcDay(ServerPlayer player) {
         return player.serverLevel().getDayTime() / TICKS_PER_MC_DAY;
+    }
+
+    private static void announcePlayerRevived(ServerPlayer player, ReviveReason reason) {
+        int variantBound = switch (reason) {
+            case PLAYER_REVIVE -> PLAYER_REVIVE_ANNOUNCEMENT_VARIANTS;
+            case KILL -> KILL_REVIVE_ANNOUNCEMENT_VARIANTS;
+            case ADMIN -> ADMIN_REVIVE_ANNOUNCEMENT_VARIANTS;
+        };
+        int variant = player.getRandom().nextInt(variantBound);
+        String reasonKey = switch (reason) {
+            case PLAYER_REVIVE -> "player_revive";
+            case KILL -> "kill";
+            case ADMIN -> "admin";
+        };
+        Component message = Component.translatable("message.secondwind.revived." + reasonKey + "." + variant, player.getDisplayName());
+        player.server.getPlayerList().broadcastSystemMessage(message, false);
     }
 
     private static void tickReviveChannel(ServerPlayer downedPlayer, SecondWindPlayerState state) {

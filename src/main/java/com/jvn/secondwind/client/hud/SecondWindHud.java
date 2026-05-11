@@ -41,8 +41,7 @@ public final class SecondWindHud {
     private static final int LAST_STAND_TIMER_CENTER_X = 153;
     private static final int LAST_STAND_TIMER_CENTER_Y = 5;
     private static final int LAST_STAND_TIMER_RED_TICKS = 100;
-    private static final int REVIVER_LABEL_OFFSET_Y = -32;
-    private static final int REVIVER_TIMER_OFFSET_Y = -18;
+    private static final int REVIVER_LABEL_OFFSET_Y = -18;
     private static final int CROSSHAIR_LABEL_OFFSET_Y = -18;
     private static final int CROSSHAIR_PRIMARY_TIMER_OFFSET_Y = 12;
     private static final int CROSSHAIR_SECONDARY_TIMER_OFFSET_Y = 26;
@@ -191,14 +190,6 @@ public final class SecondWindHud {
                 centerY + CROSSHAIR_LABEL_OFFSET_Y,
                 textColor,
                 outlineColor);
-        drawOutlinedCenteredString(
-                graphics,
-                font,
-                formatTimerLabel(ClientSecondWindState.reviveTicksRemaining()),
-                centerX,
-                centerY + CROSSHAIR_PRIMARY_TIMER_OFFSET_Y,
-                textColor,
-                outlineColor);
         return true;
     }
 
@@ -222,14 +213,6 @@ public final class SecondWindHud {
                 statusText,
                 centerX,
             centerY + REVIVER_LABEL_OFFSET_Y,
-                textColor,
-                outlineColor);
-        drawOutlinedCenteredString(
-                graphics,
-                font,
-                formatTimerLabel(SecondWindClient.reviveHoldTicksRemaining()),
-                centerX,
-            centerY + REVIVER_TIMER_OFFSET_Y,
                 textColor,
                 outlineColor);
         return true;
