@@ -24,6 +24,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
     private int reviveChannelTicks;
     private int reviveChannelRequiredTicks;
     private transient DamageSource originalDownedDamageSource;
+    private String originalDownedDeathMessage;
 
     public boolean isDowned() {
         return downed;
@@ -172,6 +173,14 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
         this.originalDownedDamageSource = originalDownedDamageSource;
     }
 
+    public String getOriginalDownedDeathMessage() {
+        return originalDownedDeathMessage;
+    }
+
+    public void setOriginalDownedDeathMessage(String originalDownedDeathMessage) {
+        this.originalDownedDeathMessage = originalDownedDeathMessage;
+    }
+
     public void clearDownedRuntime() {
         downed = false;
         downedTicksRemaining = 0;
@@ -179,6 +188,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
         downedStartGameTime = 0L;
         forcedDeathFlow = false;
         originalDownedDamageSource = null;
+        originalDownedDeathMessage = null;
         clearReviveChannel();
     }
 
@@ -187,6 +197,9 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
         CompoundTag tag = new CompoundTag();
         boolean unsafeExit = downed || pendingUnsafeExitCooldown;
         tag.putBoolean("PendingUnsafeExitCooldown", unsafeExit);
+        if (unsafeExit && originalDownedDeathMessage != null && !originalDownedDeathMessage.isBlank()) {
+            tag.putString("OriginalDownedDeathMessage", originalDownedDeathMessage);
+        }
         tag.putInt("DownPenaltyCount", downPenaltyCount);
         tag.putLong("CooldownExpiresGameTime", cooldownExpiresGameTime);
         tag.putLong("CooldownExpiresEpochMillis", cooldownExpiresEpochMillis);
@@ -200,6 +213,9 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag tag) {
         clearDownedRuntime();
         pendingUnsafeExitCooldown = tag.getBoolean("PendingUnsafeExitCooldown");
+        originalDownedDeathMessage = tag.contains("OriginalDownedDeathMessage")
+            ? tag.getString("OriginalDownedDeathMessage")
+            : null;
         downPenaltyCount = tag.getInt("DownPenaltyCount");
         cooldownExpiresGameTime = tag.getLong("CooldownExpiresGameTime");
         cooldownExpiresEpochMillis = tag.getLong("CooldownExpiresEpochMillis");

@@ -50,6 +50,7 @@ public final class SecondWindService {
         state.setDownedTicksRemaining(ticks);
         state.setDownedStartGameTime(player.serverLevel().getGameTime());
         state.setOriginalDownedDamageSource(damageSource);
+        state.setOriginalDownedDeathMessage(damageSource.getLocalizedDeathMessage(player).getString());
         state.setForcedDeathFlow(false);
         state.clearReviveChannel();
         applyDownedMobilityEffects(player);
@@ -267,8 +268,10 @@ public final class SecondWindService {
             return;
         }
 
+        String originalDownedDeathMessage = state.getOriginalDownedDeathMessage();
         state.clearDownedRuntime();
         clearDownedMobilityEffects(player);
+        state.setOriginalDownedDeathMessage(originalDownedDeathMessage);
         state.setForcedDeathFlow(false);
         state.setPendingUnsafeExitCooldown(true);
     }

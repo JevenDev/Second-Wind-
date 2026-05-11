@@ -26,12 +26,15 @@ public final class SecondWindDamageSources {
 
     public static DamageSource failureSource(ServerPlayer player, SecondWindPlayerState state, FailureReason reason) {
         DamageSource originalSource = state.getOriginalDownedDamageSource();
+        String originalMessage = state.getOriginalDownedDeathMessage();
         return new DamageSource(player.damageSources().genericKill().typeHolder()) {
             @Override
             public Component getLocalizedDeathMessage(LivingEntity livingEntity) {
                 if (reason != FailureReason.GIVE_UP) {
                     return originalSource != null
                             ? originalSource.getLocalizedDeathMessage(livingEntity)
+                            : originalMessage != null && !originalMessage.isBlank()
+                                    ? Component.literal(originalMessage)
                             : super.getLocalizedDeathMessage(livingEntity);
                 }
 
