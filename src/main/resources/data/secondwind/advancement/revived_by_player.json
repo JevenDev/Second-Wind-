@@ -1,0 +1,26 @@
+{
+  "parent": "secondwind:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:golden_apple"
+    },
+    "title": {
+      "translate": "advancements.secondwind.revived_by_player.title"
+    },
+    "description": {
+      "translate": "advancements.secondwind.revived_by_player.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "revived_by_player": {
+      "trigger": "secondwind:revive",
+      "conditions": {
+        "event": "revived_by_player"
+      }
+    }
+  }
+}

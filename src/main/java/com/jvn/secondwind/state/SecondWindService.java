@@ -1,9 +1,11 @@
 package com.jvn.secondwind.state;
 
+import com.jvn.secondwind.advancement.SecondWindCriteria;
 import com.jvn.secondwind.config.CooldownMode;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.util.SecondWindDamageSources;
+import com.jvn.secondwind.util.SecondWindEntityRules;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -17,6 +19,7 @@ public final class SecondWindService {
     public static final int TICKS_PER_SECOND = 20;
     public static final long TICKS_PER_MC_DAY = 24000L;
     private static final int DOWNED_SLOWNESS_REFRESH_TICKS = 10;
+    private static final int LAST_SECOND_REVIVE_TICKS = Math.max(1, TICKS_PER_SECOND / 10);
     private static final int REVIVE_HOLD_GRACE_TICKS = 2;
     private static final int PLAYER_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
     private static final int KILL_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
@@ -54,6 +57,10 @@ public final class SecondWindService {
         state.setDownedMaxTicks(ticks);
         state.setDownedTicksRemaining(ticks);
         state.setDownedStartGameTime(player.serverLevel().getGameTime());
+        state.setDownedByPlayer(SecondWindEntityRules.findCreditedPlayer(damageSource)
+            .filter(attacker -> attacker != player)
+            .map(ServerPlayer::getUUID)
+            .orElse(null));
         state.setOriginalDownedDamageSource(damageSource);
         state.setOriginalDownedDeathMessage(damageSource.getLocalizedDeathMessage(player).getString());
         state.setForcedDeathFlow(false);
@@ -63,12 +70,20 @@ public final class SecondWindService {
 
     public static void revive(ServerPlayer player, ReviveReason reason) {
         SecondWindPlayerState state = getState(player);
+        int remainingTicks = state.getDownedTicksRemaining();
+        ServerPlayer reviver = state.getReviveChannelReviver()
+                .map(player.server.getPlayerList()::getPlayer)
+                .orElse(null);
+        ServerPlayer downer = state.getDownedByPlayer()
+            .map(player.server.getPlayerList()::getPlayer)
+            .orElse(null);
         state.clearDownedRuntime();
         clearDownedMobilityEffects(player);
         state.incrementDownPenaltyCount();
         applyReviveHealthAndEffects(player);
         applyCooldown(player);
         announcePlayerRevived(player, reason);
+        SecondWindCriteria.triggerRevive(player, reason, remainingTicks, LAST_SECOND_REVIVE_TICKS, reviver, downer);
         SecondWindNetworking.syncToPlayer(player, true);
     }
 
@@ -140,13 +155,14 @@ public final class SecondWindService {
             return false;
         }
 
+        SecondWindPlayerState state = getState(downedPlayer);
         int requiredTicks = (int) Math.ceil(SecondWindConfig.REVIVE_CHANNEL_SECONDS.get() * TICKS_PER_SECOND);
         if (requiredTicks <= 0) {
+            state.setReviveChannel(reviver.getUUID(), 0);
             revive(downedPlayer, ReviveReason.PLAYER_REVIVE);
             return true;
         }
 
-        SecondWindPlayerState state = getState(downedPlayer);
         long gameTime = downedPlayer.serverLevel().getGameTime();
         if (state.getReviveChannelReviver().filter(reviver.getUUID()::equals).isEmpty()) {
             if (state.getReviveChannelReviver().isPresent()
@@ -308,6 +324,10 @@ public final class SecondWindService {
     }
 
     public static boolean applyDownedDamageToTimer(ServerPlayer player, float damageAmount) {
+        return applyDownedDamageToTimer(player, null, damageAmount);
+    }
+
+    public static boolean applyDownedDamageToTimer(ServerPlayer player, DamageSource damageSource, float damageAmount) {
         SecondWindPlayerState state = getState(player);
         if (!state.isDowned() || damageAmount <= 0.0F) {
             return false;
@@ -318,6 +338,11 @@ public final class SecondWindService {
         state.setDownedTicksRemaining(remainingTicks);
 
         if (remainingTicks <= 0) {
+            if (damageSource != null) {
+                SecondWindEntityRules.findCreditedPlayer(damageSource)
+                        .filter(attacker -> attacker != player)
+                        .ifPresent(SecondWindCriteria::triggerFinishHim);
+            }
             failAndKill(player, FailureReason.TIMER_EXPIRED);
             return true;
         }

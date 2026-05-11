@@ -12,6 +12,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
     private int downedTicksRemaining;
     private int downedMaxTicks;
     private long downedStartGameTime;
+    private UUID downedByPlayer;
     private int downPenaltyCount;
     private long cooldownExpiresGameTime;
     private long lastMcDayUsed = -1L;
@@ -57,6 +58,14 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
 
     public void setDownedStartGameTime(long downedStartGameTime) {
         this.downedStartGameTime = downedStartGameTime;
+    }
+
+    public Optional<UUID> getDownedByPlayer() {
+        return Optional.ofNullable(downedByPlayer);
+    }
+
+    public void setDownedByPlayer(UUID downedByPlayer) {
+        this.downedByPlayer = downedByPlayer;
     }
 
     public int getDownPenaltyCount() {
@@ -196,6 +205,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
         downedTicksRemaining = 0;
         downedMaxTicks = 0;
         downedStartGameTime = 0L;
+        downedByPlayer = null;
         forcedDeathFlow = false;
         originalDownedDamageSource = null;
         originalDownedDeathMessage = null;

@@ -1,6 +1,7 @@
 package com.jvn.secondwind.event;
 
 import com.jvn.secondwind.SecondWindMod;
+import com.jvn.secondwind.advancement.SecondWindCriteria;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.state.FailureReason;
@@ -42,6 +43,7 @@ public final class SecondWindServerEvents {
 
         SecondWindPlayerState state = SecondWindService.getState(player);
         if (state.isForcedDeathFlow() || state.isDowned()) {
+            triggerFinishHim(event, player, state);
             handleKillToRevive(event);
             return;
         }
@@ -83,6 +85,16 @@ public final class SecondWindServerEvents {
         }
 
         SecondWindService.revive(player, ReviveReason.KILL);
+    }
+
+    private static void triggerFinishHim(LivingDeathEvent event, ServerPlayer player, SecondWindPlayerState state) {
+        if (!state.isDowned()) {
+            return;
+        }
+
+        SecondWindEntityRules.findCreditedPlayer(event.getSource())
+                .filter(attacker -> attacker != player)
+                .ifPresent(SecondWindCriteria::triggerFinishHim);
     }
 
     @SubscribeEvent
@@ -148,7 +160,7 @@ public final class SecondWindServerEvents {
         if (SecondWindService.isDowned(player)) {
             boolean timerExpired = false;
             if (SecondWindConfig.DOWNED_DAMAGE_REDUCES_TIMER.get()) {
-                timerExpired = SecondWindService.applyDownedDamageToTimer(player, event.getAmount());
+                timerExpired = SecondWindService.applyDownedDamageToTimer(player, event.getSource(), event.getAmount());
             }
 
             if (timerExpired || !SecondWindConfig.DOWNED_DAMAGE_REGISTERS.get()) {

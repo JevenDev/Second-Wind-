@@ -1,0 +1,26 @@
+{
+  "parent": "secondwind:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:diamond_sword"
+    },
+    "title": {
+      "translate": "advancements.secondwind.finish_him.title"
+    },
+    "description": {
+      "translate": "advancements.secondwind.finish_him.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "finish_him": {
+      "trigger": "secondwind:revive",
+      "conditions": {
+        "event": "finish_him"
+      }
+    }
+  }
+}

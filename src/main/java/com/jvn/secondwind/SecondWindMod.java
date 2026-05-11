@@ -1,5 +1,6 @@
 package com.jvn.secondwind;
 
+import com.jvn.secondwind.advancement.SecondWindCriteria;
 import com.mojang.logging.LogUtils;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.SecondWindNetworking;
@@ -17,6 +18,7 @@ public final class SecondWindMod {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public SecondWindMod(IEventBus modEventBus, ModContainer modContainer) {
+        SecondWindCriteria.TRIGGER_TYPES.register(modEventBus);
         SecondWindData.ATTACHMENT_TYPES.register(modEventBus);
         modEventBus.addListener(SecondWindNetworking::registerPayloads);
         modContainer.registerConfig(ModConfig.Type.COMMON, SecondWindConfig.SPEC);

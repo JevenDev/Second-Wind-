@@ -1,0 +1,26 @@
+{
+  "parent": "secondwind:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:clock"
+    },
+    "title": {
+      "translate": "advancements.secondwind.just_in_time.title"
+    },
+    "description": {
+      "translate": "advancements.secondwind.just_in_time.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "just_in_time": {
+      "trigger": "secondwind:revive",
+      "conditions": {
+        "event": "just_in_time"
+      }
+    }
+  }
+}

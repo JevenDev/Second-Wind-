@@ -1,0 +1,26 @@
+{
+  "parent": "secondwind:revive_player",
+  "display": {
+    "icon": {
+      "id": "minecraft:apple"
+    },
+    "title": {
+      "translate": "advancements.secondwind.down_and_revive.title"
+    },
+    "description": {
+      "translate": "advancements.secondwind.down_and_revive.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "down_and_revive": {
+      "trigger": "secondwind:revive",
+      "conditions": {
+        "event": "down_and_revive"
+      }
+    }
+  }
+}

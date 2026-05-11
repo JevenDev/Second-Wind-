@@ -1,0 +1,26 @@
+{
+  "parent": "secondwind:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:iron_sword"
+    },
+    "title": {
+      "translate": "advancements.secondwind.kill_to_come_back.title"
+    },
+    "description": {
+      "translate": "advancements.secondwind.kill_to_come_back.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "kill_to_come_back": {
+      "trigger": "secondwind:revive",
+      "conditions": {
+        "event": "kill_to_come_back"
+      }
+    }
+  }
+}
