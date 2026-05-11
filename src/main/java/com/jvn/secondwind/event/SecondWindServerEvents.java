@@ -124,7 +124,7 @@ public final class SecondWindServerEvents {
             return;
         }
 
-        if (SecondWindService.startReviveChannel(reviver, downedPlayer)) {
+        if (SecondWindService.canPlayerRevive(reviver, downedPlayer)) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.SUCCESS);
         }

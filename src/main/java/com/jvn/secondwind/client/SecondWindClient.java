@@ -8,6 +8,9 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.EntityHitResult;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -22,6 +25,7 @@ public final class SecondWindClient {
     private static KeyMapping giveUpKey;
     private static int giveUpHeldTicks;
     private static boolean giveUpSent;
+    private static boolean localDownedPoseApplied;
 
     private SecondWindClient() {
     }
@@ -55,7 +59,21 @@ public final class SecondWindClient {
             ClientSecondWindState.tickClient();
             SecondWindPostEffects.tickClient();
             Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.player == null || giveUpKey == null || !ClientSecondWindState.isDowned()) {
+            if (minecraft.player == null) {
+                localDownedPoseApplied = false;
+                resetGiveUpHold();
+                return;
+            }
+
+            syncLocalDownedPose(minecraft);
+
+            if (!ClientSecondWindState.isDowned()) {
+                resetGiveUpHold();
+                sendReviveHoldIfNeeded(minecraft);
+                return;
+            }
+
+            if (giveUpKey == null) {
                 resetGiveUpHold();
                 return;
             }
@@ -73,6 +91,31 @@ public final class SecondWindClient {
                 resetGiveUpHold();
             }
         }
+    }
+
+    private static void syncLocalDownedPose(Minecraft minecraft) {
+        if (ClientSecondWindState.isDowned()) {
+            minecraft.player.setForcedPose(Pose.SWIMMING);
+            localDownedPoseApplied = true;
+            return;
+        }
+
+        if (localDownedPoseApplied) {
+            minecraft.player.setForcedPose(null);
+            localDownedPoseApplied = false;
+        }
+    }
+
+    private static void sendReviveHoldIfNeeded(Minecraft minecraft) {
+        if (minecraft.screen != null
+                || !minecraft.options.keyUse.isDown()
+                || !(minecraft.hitResult instanceof EntityHitResult entityHitResult)
+                || !(entityHitResult.getEntity() instanceof Player targetPlayer)
+                || targetPlayer == minecraft.player) {
+            return;
+        }
+
+        SecondWindNetworking.sendReviveHoldRequest(targetPlayer.getId());
     }
 
     private static void resetGiveUpHold() {

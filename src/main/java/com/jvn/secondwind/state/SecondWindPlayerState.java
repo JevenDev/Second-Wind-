@@ -23,6 +23,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
     private UUID reviveChannelReviver;
     private int reviveChannelTicks;
     private int reviveChannelRequiredTicks;
+    private long reviveChannelLastHoldGameTime;
     private transient DamageSource originalDownedDamageSource;
     private String originalDownedDeathMessage;
 
@@ -140,6 +141,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
         this.reviveChannelReviver = null;
         this.reviveChannelTicks = 0;
         this.reviveChannelRequiredTicks = 0;
+        this.reviveChannelLastHoldGameTime = 0L;
     }
 
     public int getReviveChannelTicks() {
@@ -156,6 +158,14 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
 
     public void setReviveChannelRequiredTicks(int reviveChannelRequiredTicks) {
         this.reviveChannelRequiredTicks = Math.max(0, reviveChannelRequiredTicks);
+    }
+
+    public long getReviveChannelLastHoldGameTime() {
+        return reviveChannelLastHoldGameTime;
+    }
+
+    public void setReviveChannelLastHoldGameTime(long reviveChannelLastHoldGameTime) {
+        this.reviveChannelLastHoldGameTime = Math.max(0L, reviveChannelLastHoldGameTime);
     }
 
     public float getReviveChannelProgress() {

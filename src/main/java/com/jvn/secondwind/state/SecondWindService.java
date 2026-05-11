@@ -11,11 +11,13 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Pose;
 
 public final class SecondWindService {
     public static final int TICKS_PER_SECOND = 20;
     public static final long TICKS_PER_MC_DAY = 24000L;
     private static final int DOWNED_SLOWNESS_REFRESH_TICKS = 10;
+    private static final int REVIVE_HOLD_GRACE_TICKS = 2;
 
     private SecondWindService() {
     }
@@ -96,6 +98,10 @@ public final class SecondWindService {
 
         applyDownedMobilityEffects(player);
         tickReviveChannel(player, state);
+        if (!state.isDowned()) {
+            return;
+        }
+
         int remaining = state.getDownedTicksRemaining() - 1;
         state.setDownedTicksRemaining(remaining);
         if (remaining <= 0) {
@@ -111,14 +117,18 @@ public final class SecondWindService {
         }
     }
 
-    public static boolean startReviveChannel(ServerPlayer reviver, ServerPlayer downedPlayer) {
-        if (!SecondWindConfig.MULTIPLAYER_REVIVE.get()
-                || reviver == downedPlayer
-                || reviver.isCreative()
-                || reviver.isSpectator()
-                || !isDowned(downedPlayer)
-                || isDowned(reviver)
-                || !isWithinReviveDistance(reviver, downedPlayer)) {
+    public static boolean canPlayerRevive(ServerPlayer reviver, ServerPlayer downedPlayer) {
+        return SecondWindConfig.MULTIPLAYER_REVIVE.get()
+                && reviver != downedPlayer
+                && !reviver.isCreative()
+                && !reviver.isSpectator()
+                && !isDowned(reviver)
+                && isDowned(downedPlayer)
+                && isWithinReviveDistance(reviver, downedPlayer);
+    }
+
+    public static boolean refreshReviveChannel(ServerPlayer reviver, ServerPlayer downedPlayer) {
+        if (!canPlayerRevive(reviver, downedPlayer)) {
             return false;
         }
 
@@ -129,9 +139,19 @@ public final class SecondWindService {
         }
 
         SecondWindPlayerState state = getState(downedPlayer);
-        state.setReviveChannel(reviver.getUUID(), requiredTicks);
-        reviver.displayClientMessage(Component.literal("Reviving..."), true);
-        SecondWindNetworking.syncToPlayer(downedPlayer);
+        long gameTime = downedPlayer.serverLevel().getGameTime();
+        if (state.getReviveChannelReviver().filter(reviver.getUUID()::equals).isEmpty()) {
+            if (state.getReviveChannelReviver().isPresent()
+                    && state.getReviveChannelLastHoldGameTime() >= gameTime - REVIVE_HOLD_GRACE_TICKS) {
+                return false;
+            }
+
+            state.setReviveChannel(reviver.getUUID(), requiredTicks);
+            reviver.displayClientMessage(Component.literal("Reviving..."), true);
+            SecondWindNetworking.syncToPlayer(downedPlayer);
+        }
+
+        state.setReviveChannelLastHoldGameTime(gameTime);
         return true;
     }
 
@@ -305,7 +325,13 @@ public final class SecondWindService {
         }
 
         ServerPlayer reviver = downedPlayer.server.getPlayerList().getPlayer(state.getReviveChannelReviver().get());
-        if (reviver == null || reviver.isRemoved() || reviver.isSpectator() || isDowned(reviver) || !isWithinReviveDistance(reviver, downedPlayer)) {
+        long gameTime = downedPlayer.serverLevel().getGameTime();
+        if (reviver == null
+                || reviver.isRemoved()
+                || reviver.isSpectator()
+                || isDowned(reviver)
+                || !isWithinReviveDistance(reviver, downedPlayer)
+                || state.getReviveChannelLastHoldGameTime() < gameTime - REVIVE_HOLD_GRACE_TICKS) {
             state.clearReviveChannel();
             SecondWindNetworking.syncToPlayer(downedPlayer);
             return;
@@ -340,6 +366,7 @@ public final class SecondWindService {
                     false));
         }
 
+        player.setForcedPose(Pose.SWIMMING);
         player.setSprinting(false);
         player.fallDistance = 0.0F;
         if (player.getAbilities().flying) {
@@ -353,6 +380,7 @@ public final class SecondWindService {
 
     private static void clearDownedMobilityEffects(ServerPlayer player) {
         player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        player.setForcedPose(null);
         player.setSprinting(false);
     }
 

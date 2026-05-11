@@ -19,6 +19,7 @@ public final class SecondWindNetworking {
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(NETWORK_VERSION);
         registrar.playToServer(ServerboundGiveUpPayload.TYPE, ServerboundGiveUpPayload.STREAM_CODEC, SecondWindNetworking::handleGiveUp);
+        registrar.playToServer(ServerboundReviveHoldPayload.TYPE, ServerboundReviveHoldPayload.STREAM_CODEC, SecondWindNetworking::handleReviveHold);
         registrar.playToClient(ClientboundSecondWindStatePayload.TYPE, ClientboundSecondWindStatePayload.STREAM_CODEC, SecondWindNetworking::handleClientState);
     }
 
@@ -43,9 +44,23 @@ public final class SecondWindNetworking {
         PacketDistributor.sendToServer(ServerboundGiveUpPayload.INSTANCE);
     }
 
+    public static void sendReviveHoldRequest(int targetEntityId) {
+        PacketDistributor.sendToServer(new ServerboundReviveHoldPayload(targetEntityId));
+    }
+
     private static void handleGiveUp(ServerboundGiveUpPayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
         if (context.player() instanceof ServerPlayer player && SecondWindService.isDowned(player)) {
             SecondWindService.failAndKill(player, FailureReason.GIVE_UP);
+        }
+    }
+
+    private static void handleReviveHold(ServerboundReviveHoldPayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
+        if (!(context.player() instanceof ServerPlayer reviver)) {
+            return;
+        }
+
+        if (reviver.serverLevel().getEntity(payload.targetEntityId()) instanceof ServerPlayer downedPlayer) {
+            SecondWindService.refreshReviveChannel(reviver, downedPlayer);
         }
     }
 
