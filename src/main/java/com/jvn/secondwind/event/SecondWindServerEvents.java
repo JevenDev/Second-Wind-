@@ -12,10 +12,13 @@ import java.util.Optional;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID)
@@ -99,5 +102,27 @@ public final class SecondWindServerEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             SecondWindService.tickDowned(player);
         }
+    }
+
+    @SubscribeEvent
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (!(event.getEntity() instanceof ServerPlayer reviver)
+                || !(event.getTarget() instanceof ServerPlayer downedPlayer)
+                || event.getLevel().isClientSide()) {
+            return;
+        }
+
+        if (SecondWindService.startReviveChannel(reviver, downedPlayer)) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onIncomingDamage(LivingIncomingDamageEvent event) {
+        if (!SecondWindConfig.REVIVE_INTERRUPT_ON_DAMAGE.get() || !(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        SecondWindService.interruptReviveChannelsFor(player);
     }
 }

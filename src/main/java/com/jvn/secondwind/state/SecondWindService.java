@@ -5,6 +5,7 @@ import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.util.SecondWindDamageSources;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -84,12 +85,57 @@ public final class SecondWindService {
         }
 
         restrictDownedMovement(player);
+        tickReviveChannel(player, state);
         int remaining = state.getDownedTicksRemaining() - 1;
         state.setDownedTicksRemaining(remaining);
         if (remaining <= 0) {
             failAndKill(player, FailureReason.TIMER_EXPIRED);
         } else if (remaining % TICKS_PER_SECOND == 0 || remaining <= 60) {
             SecondWindNetworking.syncToPlayer(player);
+        }
+    }
+
+    public static boolean startReviveChannel(ServerPlayer reviver, ServerPlayer downedPlayer) {
+        if (!SecondWindConfig.MULTIPLAYER_REVIVE.get()
+                || reviver == downedPlayer
+                || reviver.isCreative()
+                || reviver.isSpectator()
+                || !isDowned(downedPlayer)
+                || isDowned(reviver)
+                || !isWithinReviveDistance(reviver, downedPlayer)) {
+            return false;
+        }
+
+        int requiredTicks = (int) Math.ceil(SecondWindConfig.REVIVE_CHANNEL_SECONDS.get() * TICKS_PER_SECOND);
+        if (requiredTicks <= 0) {
+            revive(downedPlayer, ReviveReason.PLAYER_REVIVE);
+            return true;
+        }
+
+        SecondWindPlayerState state = getState(downedPlayer);
+        state.setReviveChannel(reviver.getUUID(), requiredTicks);
+        reviver.displayClientMessage(Component.literal("Reviving..."), true);
+        SecondWindNetworking.syncToPlayer(downedPlayer);
+        return true;
+    }
+
+    public static void interruptReviveChannelsFor(ServerPlayer player) {
+        if (isDowned(player)) {
+            SecondWindPlayerState state = getState(player);
+            if (state.getReviveChannelReviver().isPresent()) {
+                state.clearReviveChannel();
+                SecondWindNetworking.syncToPlayer(player);
+            }
+            return;
+        }
+
+        for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {
+            SecondWindPlayerState state = getState(other);
+            if (state.getReviveChannelReviver().filter(player.getUUID()::equals).isPresent()) {
+                state.clearReviveChannel();
+                player.displayClientMessage(Component.literal("Revive interrupted"), true);
+                SecondWindNetworking.syncToPlayer(other);
+            }
         }
     }
 
@@ -170,6 +216,35 @@ public final class SecondWindService {
 
     private static long currentMcDay(ServerPlayer player) {
         return player.serverLevel().getDayTime() / TICKS_PER_MC_DAY;
+    }
+
+    private static void tickReviveChannel(ServerPlayer downedPlayer, SecondWindPlayerState state) {
+        if (state.getReviveChannelReviver().isEmpty()) {
+            return;
+        }
+
+        ServerPlayer reviver = downedPlayer.server.getPlayerList().getPlayer(state.getReviveChannelReviver().get());
+        if (reviver == null || reviver.isRemoved() || reviver.isSpectator() || isDowned(reviver) || !isWithinReviveDistance(reviver, downedPlayer)) {
+            state.clearReviveChannel();
+            SecondWindNetworking.syncToPlayer(downedPlayer);
+            return;
+        }
+
+        state.setReviveChannelTicks(state.getReviveChannelTicks() + 1);
+        int percent = Math.round(state.getReviveChannelProgress() * 100.0F);
+        reviver.displayClientMessage(Component.literal("Reviving " + percent + "%"), true);
+
+        if (state.getReviveChannelTicks() >= state.getReviveChannelRequiredTicks()) {
+            revive(downedPlayer, ReviveReason.PLAYER_REVIVE);
+            reviver.displayClientMessage(Component.literal("Revived"), true);
+        } else if (state.getReviveChannelTicks() % 5 == 0) {
+            SecondWindNetworking.syncToPlayer(downedPlayer);
+        }
+    }
+
+    private static boolean isWithinReviveDistance(ServerPlayer reviver, ServerPlayer downedPlayer) {
+        double maxDistance = SecondWindConfig.REVIVE_DISTANCE.get();
+        return reviver.distanceToSqr(downedPlayer) <= maxDistance * maxDistance;
     }
 
     private static void restrictDownedMovement(ServerPlayer player) {
