@@ -37,6 +37,7 @@ public final class SecondWindNetworking {
                 state.getDownedMaxTicks(),
                 state.isDowned(),
                 state.getReviveChannelProgress(),
+            SecondWindService.isBeingRevived(player),
                 cooldownSeconds,
                 showReviveFlash,
                 currentReviverName(player, state)));
@@ -57,7 +58,8 @@ public final class SecondWindNetworking {
                 player.getId(),
                 state.isDowned(),
                 state.getDownedTicksRemaining(),
-                state.getDownedMaxTicks());
+            state.getDownedMaxTicks(),
+            SecondWindService.isBeingRevived(player));
 
         for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {
             if (other.serverLevel() == player.serverLevel()) {

@@ -18,7 +18,11 @@ public final class ClientTrackedDownedPlayers {
             return;
         }
 
-        STATES.put(payload.entityId(), new TrackedDownedPlayerState(payload.ticksRemaining(), payload.maxTicks(), System.nanoTime()));
+        STATES.put(payload.entityId(), new TrackedDownedPlayerState(
+                payload.ticksRemaining(),
+                payload.maxTicks(),
+                System.nanoTime(),
+                payload.timerPaused()));
     }
 
     public static void tickClient() {
@@ -42,6 +46,10 @@ public final class ClientTrackedDownedPlayers {
             return 0.0F;
         }
 
+        if (state.timerPaused()) {
+            return state.ticksRemaining();
+        }
+
         long elapsedNanos = Math.max(0L, System.nanoTime() - state.syncNanos());
         float elapsedTicks = elapsedNanos / 50_000_000.0F;
         return Math.max(0.0F, state.ticksRemaining() - elapsedTicks);
@@ -51,6 +59,6 @@ public final class ClientTrackedDownedPlayers {
         return STATES.containsKey(entityId);
     }
 
-    private record TrackedDownedPlayerState(int ticksRemaining, int maxTicks, long syncNanos) {
+    private record TrackedDownedPlayerState(int ticksRemaining, int maxTicks, long syncNanos, boolean timerPaused) {
     }
 }

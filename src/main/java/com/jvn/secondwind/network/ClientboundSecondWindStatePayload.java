@@ -12,6 +12,7 @@ public record ClientboundSecondWindStatePayload(
         int maxTicks,
         boolean giveUpAvailable,
         float reviveProgress,
+    boolean timerPaused,
         int cooldownSeconds,
     boolean showReviveFlash,
     String reviverName) implements CustomPacketPayload {
@@ -26,6 +27,7 @@ public record ClientboundSecondWindStatePayload(
         buffer.writeVarInt(payload.maxTicks);
         buffer.writeBoolean(payload.giveUpAvailable);
         buffer.writeFloat(payload.reviveProgress);
+        buffer.writeBoolean(payload.timerPaused);
         buffer.writeVarInt(payload.cooldownSeconds);
         buffer.writeBoolean(payload.showReviveFlash);
         buffer.writeBoolean(payload.reviverName != null && !payload.reviverName.isBlank());
@@ -41,6 +43,7 @@ public record ClientboundSecondWindStatePayload(
                 buffer.readVarInt(),
                 buffer.readBoolean(),
                 buffer.readFloat(),
+                buffer.readBoolean(),
                 buffer.readVarInt(),
                 buffer.readBoolean(),
                 buffer.readBoolean() ? buffer.readUtf() : "");

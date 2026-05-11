@@ -10,7 +10,8 @@ public record ClientboundTrackedDownedPlayerPayload(
         int entityId,
         boolean downed,
         int ticksRemaining,
-        int maxTicks) implements CustomPacketPayload {
+    int maxTicks,
+    boolean timerPaused) implements CustomPacketPayload {
     public static final Type<ClientboundTrackedDownedPlayerPayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "tracked_player_state"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundTrackedDownedPlayerPayload> STREAM_CODEC =
@@ -21,6 +22,7 @@ public record ClientboundTrackedDownedPlayerPayload(
         buffer.writeBoolean(payload.downed);
         buffer.writeVarInt(payload.ticksRemaining);
         buffer.writeVarInt(payload.maxTicks);
+        buffer.writeBoolean(payload.timerPaused);
     }
 
     private static ClientboundTrackedDownedPlayerPayload read(RegistryFriendlyByteBuf buffer) {
@@ -28,7 +30,8 @@ public record ClientboundTrackedDownedPlayerPayload(
                 buffer.readVarInt(),
                 buffer.readBoolean(),
                 buffer.readVarInt(),
-                buffer.readVarInt());
+                buffer.readVarInt(),
+                buffer.readBoolean());
     }
 
     @Override

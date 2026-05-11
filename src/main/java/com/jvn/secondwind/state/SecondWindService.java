@@ -102,6 +102,10 @@ public final class SecondWindService {
             return;
         }
 
+        if (isReviveChannelActive(state)) {
+            return;
+        }
+
         int remaining = state.getDownedTicksRemaining() - 1;
         state.setDownedTicksRemaining(remaining);
         if (remaining <= 0) {
@@ -147,7 +151,6 @@ public final class SecondWindService {
             }
 
             state.setReviveChannel(reviver.getUUID(), requiredTicks);
-            reviver.displayClientMessage(Component.literal("Reviving..."), true);
             SecondWindNetworking.syncToPlayer(downedPlayer);
         }
 
@@ -173,6 +176,10 @@ public final class SecondWindService {
                 SecondWindNetworking.syncToPlayer(other);
             }
         }
+    }
+
+    public static boolean isBeingRevived(ServerPlayer player) {
+        return isReviveChannelActive(getState(player));
     }
 
     public static void applyCooldown(ServerPlayer player) {
@@ -338,8 +345,6 @@ public final class SecondWindService {
         }
 
         state.setReviveChannelTicks(state.getReviveChannelTicks() + 1);
-        int percent = Math.round(state.getReviveChannelProgress() * 100.0F);
-        reviver.displayClientMessage(Component.literal("Reviving " + percent + "%"), true);
 
         if (state.getReviveChannelTicks() >= state.getReviveChannelRequiredTicks()) {
             revive(downedPlayer, ReviveReason.PLAYER_REVIVE);
@@ -347,6 +352,10 @@ public final class SecondWindService {
         } else if (state.getReviveChannelTicks() % 5 == 0) {
             SecondWindNetworking.syncToPlayer(downedPlayer);
         }
+    }
+
+    private static boolean isReviveChannelActive(SecondWindPlayerState state) {
+        return state.getReviveChannelReviver().isPresent();
     }
 
     private static boolean isWithinReviveDistance(ServerPlayer reviver, ServerPlayer downedPlayer) {

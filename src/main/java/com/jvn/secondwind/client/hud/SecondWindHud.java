@@ -41,6 +41,12 @@ public final class SecondWindHud {
     private static final int LAST_STAND_TIMER_CENTER_X = 153;
     private static final int LAST_STAND_TIMER_CENTER_Y = 5;
     private static final int LAST_STAND_TIMER_RED_TICKS = 100;
+    private static final int REVIVER_LABEL_OFFSET_Y = -32;
+    private static final int REVIVER_TIMER_OFFSET_Y = -18;
+    private static final int CROSSHAIR_LABEL_OFFSET_Y = -18;
+    private static final int CROSSHAIR_PRIMARY_TIMER_OFFSET_Y = 12;
+    private static final int CROSSHAIR_SECONDARY_TIMER_OFFSET_Y = 26;
+    private static final int REVIVE_TEXT_COLOR = 0xFF61D394;
     public static final int TIMER_OUTLINE_COLOR = 0xFF000000;
 
     private SecondWindHud() {
@@ -52,6 +58,7 @@ public final class SecondWindHud {
 
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {
+        renderCrosshairStatus(event);
         if (!ClientSecondWindState.isDowned()) {
             renderReviveFlash(event);
         }
@@ -73,8 +80,24 @@ public final class SecondWindHud {
         int y = height - 22 - LAST_STAND_HEIGHT - LAST_STAND_HOTBAR_GAP;
 
         renderLastStandTimer(graphics, x, y);
-        renderBeingRevived(graphics, minecraft.font, width / 2, height / 2 - 18);
-        renderGiveUpCountdown(graphics, minecraft.font, width / 2, height / 2 + 12);
+    }
+
+    private static void renderCrosshairStatus(RenderGuiEvent.Post event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || minecraft.options.hideGui) {
+            return;
+        }
+
+        GuiGraphics graphics = event.getGuiGraphics();
+        Font font = minecraft.font;
+        int centerX = minecraft.getWindow().getGuiScaledWidth() / 2;
+        int centerY = minecraft.getWindow().getGuiScaledHeight() / 2;
+        boolean reviveOverlayVisible = renderReviveStatus(graphics, font, centerX, centerY);
+
+        if (ClientSecondWindState.isDowned()) {
+            int giveUpTimerY = centerY + (reviveOverlayVisible ? CROSSHAIR_SECONDARY_TIMER_OFFSET_Y : CROSSHAIR_PRIMARY_TIMER_OFFSET_Y);
+            renderGiveUpCountdown(graphics, font, centerX, giveUpTimerY);
+        }
     }
 
     private static void renderReviveFlash(RenderGuiEvent.Post event) {
@@ -138,6 +161,85 @@ public final class SecondWindHud {
         return displayedTicksRemaining <= LAST_STAND_TIMER_RED_TICKS ? 0xFFFF4040 : 0xFFFFFFFF;
     }
 
+    private static boolean renderReviveStatus(GuiGraphics graphics, Font font, int centerX, int centerY) {
+        if (ClientSecondWindState.isDowned()) {
+            return renderDownedReviveStatus(graphics, font, centerX, centerY);
+        }
+
+        return renderReviverStatus(graphics, font, centerX, centerY);
+    }
+
+    private static boolean renderDownedReviveStatus(GuiGraphics graphics, Font font, int centerX, int centerY) {
+        if (!ClientSecondWindState.hasReviveOverlay()) {
+            return false;
+        }
+
+        float alpha = ClientSecondWindState.reviveOverlayAlpha();
+        int textColor = applyAlpha(REVIVE_TEXT_COLOR, alpha);
+        int outlineColor = applyAlpha(TIMER_OUTLINE_COLOR, alpha);
+        int progressPercent = Math.round(ClientSecondWindState.displayedReviveProgress() * 100.0F);
+        String reviverName = ClientSecondWindState.displayedReviverName();
+        String statusText = reviverName == null || reviverName.isBlank()
+                ? "Being revived " + progressPercent + "%"
+                : "Being revived by " + reviverName + " " + progressPercent + "%";
+
+        drawOutlinedCenteredString(
+                graphics,
+                font,
+                statusText,
+                centerX,
+                centerY + CROSSHAIR_LABEL_OFFSET_Y,
+                textColor,
+                outlineColor);
+        drawOutlinedCenteredString(
+                graphics,
+                font,
+                formatTimerLabel(ClientSecondWindState.reviveTicksRemaining()),
+                centerX,
+                centerY + CROSSHAIR_PRIMARY_TIMER_OFFSET_Y,
+                textColor,
+                outlineColor);
+        return true;
+    }
+
+    private static boolean renderReviverStatus(GuiGraphics graphics, Font font, int centerX, int centerY) {
+        if (!SecondWindClient.hasReviveOverlay()) {
+            return false;
+        }
+
+        float alpha = SecondWindClient.reviveOverlayAlpha();
+        int textColor = applyAlpha(REVIVE_TEXT_COLOR, alpha);
+        int outlineColor = applyAlpha(TIMER_OUTLINE_COLOR, alpha);
+        int progressPercent = Math.round(SecondWindClient.reviveProgress() * 100.0F);
+        String targetName = SecondWindClient.reviveTargetName();
+        String statusText = targetName == null || targetName.isBlank()
+                ? "Reviving " + progressPercent + "%"
+                : "Reviving " + targetName + " " + progressPercent + "%";
+
+        drawOutlinedCenteredString(
+                graphics,
+                font,
+                statusText,
+                centerX,
+            centerY + REVIVER_LABEL_OFFSET_Y,
+                textColor,
+                outlineColor);
+        drawOutlinedCenteredString(
+                graphics,
+                font,
+                formatTimerLabel(SecondWindClient.reviveHoldTicksRemaining()),
+                centerX,
+            centerY + REVIVER_TIMER_OFFSET_Y,
+                textColor,
+                outlineColor);
+        return true;
+    }
+
+    private static int applyAlpha(int color, float alpha) {
+        int alphaChannel = Mth.clamp(Math.round(alpha * 255.0F), 0, 255);
+        return alphaChannel << 24 | color & 0x00FFFFFF;
+    }
+
     private static void drawOutlinedCenteredString(
             GuiGraphics graphics,
             Font font,
@@ -162,17 +264,5 @@ public final class SecondWindHud {
 
         String timerLabel = String.format(Locale.ROOT, "%.1fs", SecondWindClient.giveUpHoldSecondsRemaining());
         drawOutlinedCenteredString(graphics, font, timerLabel, centerX, centerY, 0xFFFF4040, TIMER_OUTLINE_COLOR);
-    }
-
-    private static void renderBeingRevived(GuiGraphics graphics, Font font, int centerX, int centerY) {
-        if (ClientSecondWindState.reviveProgress() <= 0.0F) {
-            return;
-        }
-
-        String reviverName = ClientSecondWindState.reviverName();
-        String text = reviverName == null || reviverName.isBlank()
-                ? "Being revived!"
-                : "Being revived by " + reviverName + "!";
-        drawOutlinedCenteredString(graphics, font, text, centerX, centerY, 0xFFFFFFFF, TIMER_OUTLINE_COLOR);
     }
 }
