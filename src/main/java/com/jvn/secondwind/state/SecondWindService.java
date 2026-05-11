@@ -2,9 +2,11 @@ package com.jvn.secondwind.state;
 
 import com.jvn.secondwind.config.CooldownMode;
 import com.jvn.secondwind.config.SecondWindConfig;
+import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.util.SecondWindDamageSources;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.phys.Vec3;
 
 public final class SecondWindService {
     public static final int TICKS_PER_SECOND = 20;
@@ -59,6 +61,30 @@ public final class SecondWindService {
         state.incrementDownPenaltyCount();
         state.setForcedDeathFlow(true);
         applyCooldown(player);
+    }
+
+    public static void failAndKill(ServerPlayer player, FailureReason reason) {
+        failDowned(player, reason);
+        player.setHealth(1.0F);
+        player.hurt(player.damageSources().genericKill(), Float.MAX_VALUE);
+        SecondWindNetworking.syncToPlayer(player);
+    }
+
+    public static void tickDowned(ServerPlayer player) {
+        SecondWindPlayerState state = getState(player);
+        if (!state.isDowned()) {
+            resetCooldownForNewDayIfNeeded(player);
+            return;
+        }
+
+        restrictDownedMovement(player);
+        int remaining = state.getDownedTicksRemaining() - 1;
+        state.setDownedTicksRemaining(remaining);
+        if (remaining <= 0) {
+            failAndKill(player, FailureReason.TIMER_EXPIRED);
+        } else if (remaining % TICKS_PER_SECOND == 0 || remaining <= 60) {
+            SecondWindNetworking.syncToPlayer(player);
+        }
     }
 
     public static void applyCooldown(ServerPlayer player) {
@@ -138,5 +164,21 @@ public final class SecondWindService {
 
     private static long currentMcDay(ServerPlayer player) {
         return player.serverLevel().getDayTime() / TICKS_PER_MC_DAY;
+    }
+
+    private static void restrictDownedMovement(ServerPlayer player) {
+        double multiplier = SecondWindConfig.DOWNED_MOVEMENT_MULTIPLIER.get();
+        Vec3 motion = player.getDeltaMovement();
+        double y = motion.y > 0.0D ? motion.y * 0.15D : motion.y;
+        player.setDeltaMovement(motion.x * multiplier, y, motion.z * multiplier);
+        player.setSprinting(false);
+        player.fallDistance = 0.0F;
+        if (player.getAbilities().flying) {
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
+        }
+        if (player.isFallFlying()) {
+            player.stopFallFlying();
+        }
     }
 }

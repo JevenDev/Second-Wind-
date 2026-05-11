@@ -13,6 +13,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID)
 public final class SecondWindServerEvents {
@@ -70,6 +71,13 @@ public final class SecondWindServerEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             SecondWindService.getState(player).setForcedDeathFlow(false);
             SecondWindNetworking.syncToPlayer(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            SecondWindService.tickDowned(player);
         }
     }
 }
