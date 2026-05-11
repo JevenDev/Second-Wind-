@@ -1,0 +1,19 @@
+{
+  "targets": [
+    "final"
+  ],
+  "passes": [
+    {
+      "name": "secondwind:downed_composite",
+      "intarget": "minecraft:main",
+      "outtarget": "final",
+      "use_linear_filter": true
+    },
+    {
+      "name": "secondwind:downed_copy",
+      "intarget": "final",
+      "outtarget": "minecraft:main",
+      "use_linear_filter": true
+    }
+  ]
+}

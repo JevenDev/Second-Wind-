@@ -21,6 +21,7 @@ public final class SecondWindMod {
         modEventBus.addListener(SecondWindNetworking::registerPayloads);
         modContainer.registerConfig(ModConfig.Type.COMMON, SecondWindConfig.SPEC);
         if (FMLEnvironment.dist.isClient()) {
+            com.jvn.secondwind.client.SecondWindClient.register(modEventBus);
             com.jvn.secondwind.client.SecondWindConfigScreens.register(modContainer);
         }
     }

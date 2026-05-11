@@ -2,13 +2,16 @@ package com.jvn.secondwind.client;
 
 import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.network.SecondWindNetworking;
+import com.jvn.secondwind.client.shader.SecondWindPostEffects;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
@@ -22,20 +25,22 @@ public final class SecondWindClient {
     private SecondWindClient() {
     }
 
-    @EventBusSubscriber(modid = SecondWindMod.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static final class ModEvents {
-        private ModEvents() {
-        }
+    public static void register(IEventBus modEventBus) {
+        modEventBus.addListener(SecondWindClient::registerKeys);
+        modEventBus.addListener(SecondWindClient::onClientSetup);
+    }
 
-        @SubscribeEvent
-        public static void registerKeys(RegisterKeyMappingsEvent event) {
-            giveUpKey = new KeyMapping(
-                    "key.secondwind.give_up",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_R,
-                    "key.categories.secondwind");
-            event.register(giveUpKey);
-        }
+    private static void registerKeys(RegisterKeyMappingsEvent event) {
+        giveUpKey = new KeyMapping(
+                "key.secondwind.give_up",
+                InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_R,
+                "key.categories.secondwind");
+        event.register(giveUpKey);
+    }
+
+    private static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(SecondWindPostEffects::register);
     }
 
     @EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)
@@ -46,6 +51,7 @@ public final class SecondWindClient {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
             ClientSecondWindState.tickClient();
+            SecondWindPostEffects.tickClient();
             Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.player == null || giveUpKey == null || !ClientSecondWindState.isDowned()) {
                 resetGiveUpHold();

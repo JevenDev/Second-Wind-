@@ -62,7 +62,9 @@
   "secondwind.configuration.enableDownedVignette": "Downed Vignette",
   "secondwind.configuration.enableDownedVignette.tooltip": "Show a dark vignette effect while the player is downed.",
   "secondwind.configuration.enableDesaturation": "Desaturation",
-  "secondwind.configuration.enableDesaturation.tooltip": "Show desaturation-style visual feedback while downed when supported.",
+  "secondwind.configuration.enableDesaturation.tooltip": "Show a desaturated red screen tint while downed when supported.",
+  "secondwind.configuration.enableDownedBloom": "Downed Bloom",
+  "secondwind.configuration.enableDownedBloom.tooltip": "Apply a soft bloom-style blur while downed when supported.",
   "secondwind.configuration.enableSounds": "Downed Sounds",
   "secondwind.configuration.enableSounds.tooltip": "Play Second Wind sound effects when available."
 }

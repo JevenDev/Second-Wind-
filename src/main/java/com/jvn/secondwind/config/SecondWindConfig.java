@@ -29,6 +29,7 @@ public final class SecondWindConfig {
     public static final ModConfigSpec.BooleanValue ALLOW_VOID_SECOND_WIND;
     public static final ModConfigSpec.BooleanValue ENABLE_DOWNED_VIGNETTE;
     public static final ModConfigSpec.BooleanValue ENABLE_DESATURATION;
+    public static final ModConfigSpec.BooleanValue ENABLE_DOWNED_BLOOM;
     public static final ModConfigSpec.BooleanValue ENABLE_SOUNDS;
 
     public static final ModConfigSpec SPEC;
@@ -115,8 +116,11 @@ public final class SecondWindConfig {
                 .comment("Show a dark vignette while downed.")
                 .define("enableDownedVignette", true);
         ENABLE_DESATURATION = BUILDER
-                .comment("Show desaturation-style feedback while downed when supported.")
+                .comment("Show a desaturated red screen tint while downed when supported.")
                 .define("enableDesaturation", true);
+        ENABLE_DOWNED_BLOOM = BUILDER
+                .comment("Apply a soft bloom-style blur while downed when supported.")
+                .define("enableDownedBloom", true);
         ENABLE_SOUNDS = BUILDER
                 .comment("Play Second Wind sounds when available.")
                 .define("enableSounds", true);
