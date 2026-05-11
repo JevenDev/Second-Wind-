@@ -2,6 +2,8 @@ package com.jvn.secondwind.client.hud;
 
 import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.client.ClientSecondWindState;
+import com.jvn.secondwind.client.SecondWindClient;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -11,12 +13,17 @@ import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
 import java.util.Locale;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)
 public final class SecondWindHud {
+    private static final ResourceLocation LAST_STAND_LAYER = ResourceLocation.fromNamespaceAndPath(
+            SecondWindMod.MOD_ID,
+            "last_stand_layer");
     private static final ResourceLocation LAST_STAND_BAR_BASE = ResourceLocation.fromNamespaceAndPath(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_bar_base.png");
@@ -38,10 +45,19 @@ public final class SecondWindHud {
     private SecondWindHud() {
     }
 
+    public static void registerGuiLayers(RegisterGuiLayersEvent event) {
+        event.registerAbove(VanillaGuiLayers.CHAT, LAST_STAND_LAYER, SecondWindHud::renderHudLayer);
+    }
+
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {
         if (!ClientSecondWindState.isDowned()) {
             renderReviveFlash(event);
+        }
+    }
+
+    public static void renderHudLayer(GuiGraphics graphics, DeltaTracker partialTick) {
+        if (!ClientSecondWindState.isDowned()) {
             return;
         }
 
@@ -50,13 +66,13 @@ public final class SecondWindHud {
             return;
         }
 
-        GuiGraphics graphics = event.getGuiGraphics();
         int width = minecraft.getWindow().getGuiScaledWidth();
         int height = minecraft.getWindow().getGuiScaledHeight();
         int x = width / 2 - LAST_STAND_WIDTH / 2;
         int y = height - 22 - LAST_STAND_HEIGHT - LAST_STAND_HOTBAR_GAP;
 
         renderLastStandTimer(graphics, x, y);
+        renderGiveUpCountdown(graphics, minecraft.font, width / 2, height / 2 + 12);
     }
 
     private static void renderReviveFlash(RenderGuiEvent.Post event) {
@@ -127,5 +143,14 @@ public final class SecondWindHud {
         graphics.drawString(font, text, textX, textY - 1, outlineColor, false);
         graphics.drawString(font, text, textX, textY + 1, outlineColor, false);
         graphics.drawString(font, text, textX, textY, color, false);
+    }
+
+    private static void renderGiveUpCountdown(GuiGraphics graphics, Font font, int centerX, int centerY) {
+        if (!ClientSecondWindState.giveUpAvailable() || !SecondWindClient.isHoldingGiveUp()) {
+            return;
+        }
+
+        String timerLabel = String.format(Locale.ROOT, "%.1fs", SecondWindClient.giveUpHoldSecondsRemaining());
+        drawOutlinedCenteredString(graphics, font, timerLabel, centerX, centerY, 0xFFFF4040, 0xFF000000);
     }
 }

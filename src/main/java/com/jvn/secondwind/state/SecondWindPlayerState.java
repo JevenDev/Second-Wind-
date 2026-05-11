@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.damagesource.DamageSource;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 
 public final class SecondWindPlayerState implements INBTSerializable<CompoundTag> {
@@ -22,6 +23,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
     private UUID reviveChannelReviver;
     private int reviveChannelTicks;
     private int reviveChannelRequiredTicks;
+    private transient DamageSource originalDownedDamageSource;
 
     public boolean isDowned() {
         return downed;
@@ -162,12 +164,21 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
         return Math.min(1.0F, reviveChannelTicks / (float) reviveChannelRequiredTicks);
     }
 
+    public DamageSource getOriginalDownedDamageSource() {
+        return originalDownedDamageSource;
+    }
+
+    public void setOriginalDownedDamageSource(DamageSource originalDownedDamageSource) {
+        this.originalDownedDamageSource = originalDownedDamageSource;
+    }
+
     public void clearDownedRuntime() {
         downed = false;
         downedTicksRemaining = 0;
         downedMaxTicks = 0;
         downedStartGameTime = 0L;
         forcedDeathFlow = false;
+        originalDownedDamageSource = null;
         clearReviveChannel();
     }
 

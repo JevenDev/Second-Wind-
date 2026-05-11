@@ -1,6 +1,7 @@
 package com.jvn.secondwind.client;
 
 import com.jvn.secondwind.SecondWindMod;
+import com.jvn.secondwind.client.hud.SecondWindHud;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.client.shader.SecondWindPostEffects;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -28,6 +29,7 @@ public final class SecondWindClient {
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(SecondWindClient::registerKeys);
         modEventBus.addListener(SecondWindClient::onClientSetup);
+        modEventBus.addListener(SecondWindHud::registerGuiLayers);
     }
 
     private static void registerKeys(RegisterKeyMappingsEvent event) {
@@ -80,5 +82,13 @@ public final class SecondWindClient {
 
     public static Component giveUpKeyName() {
         return giveUpKey == null ? Component.literal("R") : giveUpKey.getTranslatedKeyMessage();
+    }
+
+    public static float giveUpHoldSecondsRemaining() {
+        return Math.max(0.0F, (GIVE_UP_HOLD_TICKS - giveUpHeldTicks) / 20.0F);
+    }
+
+    public static boolean isHoldingGiveUp() {
+        return giveUpHeldTicks > 0 && !giveUpSent;
     }
 }

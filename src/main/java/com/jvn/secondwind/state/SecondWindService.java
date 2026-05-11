@@ -49,6 +49,7 @@ public final class SecondWindService {
         state.setDownedMaxTicks(ticks);
         state.setDownedTicksRemaining(ticks);
         state.setDownedStartGameTime(player.serverLevel().getGameTime());
+        state.setOriginalDownedDamageSource(damageSource);
         state.setForcedDeathFlow(false);
         state.clearReviveChannel();
         applyDownedMobilityEffects(player);
@@ -74,9 +75,14 @@ public final class SecondWindService {
     }
 
     public static void failAndKill(ServerPlayer player, FailureReason reason) {
+        SecondWindPlayerState state = getState(player);
+        DamageSource damageSource = SecondWindDamageSources.failureSource(player, state, reason);
         failDowned(player, reason);
         player.setHealth(1.0F);
-        player.hurt(player.damageSources().genericKill(), Float.MAX_VALUE);
+        player.invulnerableTime = 0;
+        if (!player.hurt(damageSource, Float.MAX_VALUE)) {
+            player.kill();
+        }
         SecondWindNetworking.syncToPlayer(player);
     }
 
