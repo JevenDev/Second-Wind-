@@ -4,8 +4,11 @@ import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.state.FailureReason;
+import com.jvn.secondwind.state.ReviveReason;
 import com.jvn.secondwind.state.SecondWindPlayerState;
 import com.jvn.secondwind.state.SecondWindService;
+import com.jvn.secondwind.util.SecondWindEntityRules;
+import java.util.Optional;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -25,15 +28,18 @@ public final class SecondWindServerEvents {
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
+            handleKillToRevive(event);
             return;
         }
 
         SecondWindPlayerState state = SecondWindService.getState(player);
         if (state.isForcedDeathFlow() || state.isDowned()) {
+            handleKillToRevive(event);
             return;
         }
 
         if (!SecondWindService.canTriggerSecondWind(player, event.getSource())) {
+            handleKillToRevive(event);
             return;
         }
 
@@ -48,6 +54,20 @@ public final class SecondWindServerEvents {
         }
 
         SecondWindNetworking.syncToPlayer(player);
+    }
+
+    private static void handleKillToRevive(LivingDeathEvent event) {
+        Optional<ServerPlayer> creditedPlayer = SecondWindEntityRules.findCreditedPlayer(event.getSource());
+        if (creditedPlayer.isEmpty()) {
+            return;
+        }
+
+        ServerPlayer player = creditedPlayer.get();
+        if (!SecondWindService.isDowned(player) || !SecondWindEntityRules.isValidReviveTarget(event.getEntity(), player)) {
+            return;
+        }
+
+        SecondWindService.revive(player, ReviveReason.KILL);
     }
 
     @SubscribeEvent

@@ -5,7 +5,11 @@ import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.util.SecondWindDamageSources;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
 
 public final class SecondWindService {
@@ -52,7 +56,9 @@ public final class SecondWindService {
         SecondWindPlayerState state = getState(player);
         state.clearDownedRuntime();
         state.incrementDownPenaltyCount();
+        applyReviveHealthAndEffects(player);
         applyCooldown(player);
+        SecondWindNetworking.syncToPlayer(player);
     }
 
     public static void failDowned(ServerPlayer player, FailureReason reason) {
@@ -179,6 +185,26 @@ public final class SecondWindService {
         }
         if (player.isFallFlying()) {
             player.stopFallFlying();
+        }
+    }
+
+    private static void applyReviveHealthAndEffects(ServerPlayer player) {
+        float maxHealth = player.getMaxHealth();
+        float targetHealth = Math.min(maxHealth, SecondWindConfig.REVIVE_HEALTH_HALF_HEARTS.get().floatValue());
+        int regenTicks = SecondWindConfig.REVIVE_REGENERATION_SECONDS.get() * TICKS_PER_SECOND;
+        float initialHealth = regenTicks > 0 ? Math.max(4.0F, targetHealth * 0.5F) : targetHealth;
+        player.setHealth(Math.min(maxHealth, Math.max(player.getHealth(), initialHealth)));
+        if (regenTicks > 0) {
+            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, regenTicks, 1));
+        }
+
+        int invulnerableTicks = SecondWindConfig.POST_REVIVE_INVULNERABILITY_SECONDS.get() * TICKS_PER_SECOND;
+        if (invulnerableTicks > 0) {
+            player.invulnerableTime = Math.max(player.invulnerableTime, invulnerableTicks);
+        }
+
+        if (SecondWindConfig.ENABLE_SOUNDS.get()) {
+            player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8F, 1.4F);
         }
     }
 }
