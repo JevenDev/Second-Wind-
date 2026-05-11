@@ -3,6 +3,7 @@ package com.jvn.secondwind.client.hud;
 import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.client.ClientSecondWindState;
 import com.jvn.secondwind.client.SecondWindClient;
+import com.jvn.secondwind.config.SecondWindConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -20,6 +21,7 @@ public final class SecondWindHud {
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {
         if (!ClientSecondWindState.isDowned()) {
+            renderReviveFlash(event);
             return;
         }
 
@@ -37,6 +39,7 @@ public final class SecondWindHud {
         int seconds = (int) Math.ceil(ClientSecondWindState.ticksRemaining() / 20.0D);
         int urgency = ClientSecondWindState.ticksRemaining() <= 60 ? 0xFFFF4040 : 0xFFFFF2D0;
 
+        renderDownedOverlay(graphics, width, height);
         graphics.fill(centerX - 112, centerY - 12, centerX + 112, centerY + 70, 0x99000000);
         graphics.drawCenteredString(font, Component.literal("FIGHT FOR YOUR LIFE"), centerX, centerY, 0xFFFF4040);
         graphics.drawCenteredString(font, Component.literal(seconds + "s"), centerX, centerY + 16, urgency);
@@ -53,5 +56,33 @@ public final class SecondWindHud {
                     .append(SecondWindClient.giveUpKeyName())
                     .append(" to Give Up"), centerX, centerY + 58, 0xFFB8B8B8);
         }
+    }
+
+    private static void renderDownedOverlay(GuiGraphics graphics, int width, int height) {
+        if (SecondWindConfig.ENABLE_DESATURATION.get()) {
+            graphics.fill(0, 0, width, height, 0x44303030);
+        }
+        if (SecondWindConfig.ENABLE_DOWNED_VIGNETTE.get()) {
+            graphics.fill(0, 0, width, 26, 0xAA000000);
+            graphics.fill(0, height - 26, width, height, 0xAA000000);
+            graphics.fill(0, 0, 26, height, 0x88000000);
+            graphics.fill(width - 26, 0, width, height, 0x88000000);
+        }
+    }
+
+    private static void renderReviveFlash(RenderGuiEvent.Post event) {
+        int ticks = ClientSecondWindState.revivedFlashTicks();
+        if (ticks <= 0) {
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        GuiGraphics graphics = event.getGuiGraphics();
+        Font font = minecraft.font;
+        int width = minecraft.getWindow().getGuiScaledWidth();
+        int height = minecraft.getWindow().getGuiScaledHeight();
+        int alpha = Math.min(255, ticks * 8);
+        int color = alpha << 24 | 0x61D394;
+        graphics.drawCenteredString(font, Component.literal("SECOND WIND"), width / 2, height / 2 - 28, color);
     }
 }

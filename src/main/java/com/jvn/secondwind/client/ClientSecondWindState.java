@@ -9,6 +9,7 @@ public final class ClientSecondWindState {
     private static boolean giveUpAvailable;
     private static float reviveProgress;
     private static int cooldownSeconds;
+    private static int revivedFlashTicks;
 
     private ClientSecondWindState() {
     }
@@ -22,7 +23,11 @@ public final class ClientSecondWindState {
     }
 
     public static void apply(ClientboundSecondWindStatePayload payload) {
+        boolean wasDowned = downed;
         downed = payload.downed();
+        if (wasDowned && !downed) {
+            revivedFlashTicks = 50;
+        }
         ticksRemaining = payload.ticksRemaining();
         maxTicks = payload.maxTicks();
         giveUpAvailable = payload.giveUpAvailable();
@@ -48,5 +53,15 @@ public final class ClientSecondWindState {
 
     public static int cooldownSeconds() {
         return cooldownSeconds;
+    }
+
+    public static int revivedFlashTicks() {
+        return revivedFlashTicks;
+    }
+
+    public static void tickClient() {
+        if (revivedFlashTicks > 0) {
+            revivedFlashTicks--;
+        }
     }
 }

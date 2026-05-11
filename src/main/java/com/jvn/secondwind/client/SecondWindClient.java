@@ -45,6 +45,7 @@ public final class SecondWindClient {
 
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
+            ClientSecondWindState.tickClient();
             Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.player == null || giveUpKey == null || !ClientSecondWindState.isDowned()) {
                 resetGiveUpHold();
