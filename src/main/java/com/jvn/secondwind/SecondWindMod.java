@@ -8,6 +8,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.slf4j.Logger;
 
 @Mod(SecondWindMod.MOD_ID)
@@ -19,5 +20,8 @@ public final class SecondWindMod {
         SecondWindData.ATTACHMENT_TYPES.register(modEventBus);
         modEventBus.addListener(SecondWindNetworking::registerPayloads);
         modContainer.registerConfig(ModConfig.Type.COMMON, SecondWindConfig.SPEC);
+        if (FMLEnvironment.dist.isClient()) {
+            com.jvn.secondwind.client.SecondWindConfigScreens.register(modContainer);
+        }
     }
 }

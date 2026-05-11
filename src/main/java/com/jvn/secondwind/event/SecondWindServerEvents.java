@@ -17,6 +17,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerWakeUpEvent;
@@ -93,8 +95,18 @@ public final class SecondWindServerEvents {
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            if (!event.isEndConquered() && SecondWindConfig.RESET_COOLDOWN_ON_DEATH.get()) {
+                SecondWindService.resetCooldownAfterDeath(player);
+            }
             SecondWindService.getState(player).setForcedDeathFlow(false);
             SecondWindNetworking.syncToPlayer(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(PlayerTickEvent.Pre event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            SecondWindService.enforceDownedMovement(player);
         }
     }
 
@@ -121,10 +133,46 @@ public final class SecondWindServerEvents {
 
     @SubscribeEvent
     public static void onIncomingDamage(LivingIncomingDamageEvent event) {
-        if (!SecondWindConfig.REVIVE_INTERRUPT_ON_DAMAGE.get() || !(event.getEntity() instanceof ServerPlayer player)) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        SecondWindService.interruptReviveChannelsFor(player);
+
+        if (SecondWindService.isDowned(player)) {
+            boolean timerExpired = false;
+            if (SecondWindConfig.DOWNED_DAMAGE_REDUCES_TIMER.get()) {
+                timerExpired = SecondWindService.applyDownedDamageToTimer(player, event.getAmount());
+            }
+
+            if (timerExpired || !SecondWindConfig.DOWNED_DAMAGE_REGISTERS.get()) {
+                event.setCanceled(true);
+            }
+        }
+
+        if (SecondWindConfig.REVIVE_INTERRUPT_ON_DAMAGE.get()) {
+            SecondWindService.interruptReviveChannelsFor(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingHeal(LivingHealEvent event) {
+        if (SecondWindConfig.BLOCK_HEALING_WHILE_DOWNED.get()
+                && event.getEntity() instanceof ServerPlayer player
+                && SecondWindService.isDowned(player)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingEntityUseItemStart(LivingEntityUseItemEvent.Start event) {
+        if (!SecondWindConfig.BLOCK_EATING_WHILE_DOWNED.get()
+                || !(event.getEntity() instanceof ServerPlayer player)
+                || !SecondWindService.isDowned(player)) {
+            return;
+        }
+
+        if (event.getItem().getFoodProperties(player) != null) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent

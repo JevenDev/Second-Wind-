@@ -8,12 +8,17 @@ public final class SecondWindConfig {
     public static final ModConfigSpec.IntValue DOWNED_TIMER_SECONDS;
     public static final ModConfigSpec.IntValue MINIMUM_DOWNED_TIMER_SECONDS;
     public static final ModConfigSpec.IntValue TIMER_PENALTY_PER_DOWN;
-    public static final ModConfigSpec.DoubleValue DOWNED_MOVEMENT_MULTIPLIER;
+    public static final ModConfigSpec.IntValue DOWNED_SLOWNESS_LEVEL;
+    public static final ModConfigSpec.BooleanValue DOWNED_DAMAGE_REDUCES_TIMER;
+    public static final ModConfigSpec.BooleanValue DOWNED_DAMAGE_REGISTERS;
+    public static final ModConfigSpec.BooleanValue BLOCK_HEALING_WHILE_DOWNED;
+    public static final ModConfigSpec.BooleanValue BLOCK_EATING_WHILE_DOWNED;
     public static final ModConfigSpec.IntValue REVIVE_HEALTH_HALF_HEARTS;
     public static final ModConfigSpec.IntValue REVIVE_REGENERATION_SECONDS;
     public static final ModConfigSpec.IntValue POST_REVIVE_INVULNERABILITY_SECONDS;
     public static final ModConfigSpec.EnumValue<CooldownMode> COOLDOWN_MODE;
     public static final ModConfigSpec.IntValue COOLDOWN_DURATION_SECONDS;
+    public static final ModConfigSpec.BooleanValue RESET_COOLDOWN_ON_DEATH;
     public static final ModConfigSpec.BooleanValue MULTIPLAYER_REVIVE;
     public static final ModConfigSpec.DoubleValue REVIVE_CHANNEL_SECONDS;
     public static final ModConfigSpec.DoubleValue REVIVE_DISTANCE;
@@ -40,9 +45,21 @@ public final class SecondWindConfig {
         TIMER_PENALTY_PER_DOWN = BUILDER
                 .comment("Seconds removed from the downed timer for each current penalty count.")
                 .defineInRange("timerPenaltyPerDown", 2, 0, 10);
-        DOWNED_MOVEMENT_MULTIPLIER = BUILDER
-                .comment("Movement multiplier while downed. 0 prevents horizontal movement, 1 is normal speed.")
-                .defineInRange("downedMovementMultiplier", 0.25D, 0.0D, 1.0D);
+        DOWNED_SLOWNESS_LEVEL = BUILDER
+                .comment("Vanilla Slowness level applied while downed. 0 disables it, 3 is Slowness III.")
+                .defineInRange("downedSlownessLevel", 3, 0, 6);
+        DOWNED_DAMAGE_REDUCES_TIMER = BUILDER
+                .comment("When a downed player is hit, reduce their remaining downed timer based on the incoming damage amount.")
+                .define("downedDamageReducesTimer", true);
+        DOWNED_DAMAGE_REGISTERS = BUILDER
+                .comment("Allow hits against downed players to continue applying normal Minecraft damage in addition to any timer reduction.")
+                .define("downedDamageRegisters", false);
+        BLOCK_HEALING_WHILE_DOWNED = BUILDER
+                .comment("Prevent healing from restoring health while the player is downed.")
+                .define("blockHealingWhileDowned", true);
+        BLOCK_EATING_WHILE_DOWNED = BUILDER
+                .comment("Prevent downed players from eating food items until they are revived or die.")
+                .define("blockEatingWhileDowned", true);
         REVIVE_HEALTH_HALF_HEARTS = BUILDER
                 .comment("Health restored on revive, measured in half-hearts.")
                 .defineInRange("reviveHealthHalfHearts", 12, 1, 40);
@@ -59,6 +76,9 @@ public final class SecondWindConfig {
         COOLDOWN_DURATION_SECONDS = BUILDER
                 .comment("Timed cooldown duration in seconds when cooldownMode is TIMED.")
                 .defineInRange("cooldownDurationSeconds", 300, 0, 86400);
+        RESET_COOLDOWN_ON_DEATH = BUILDER
+                .comment("Reset Second Wind cooldown and repeated-down penalty when the player dies and respawns.")
+                .define("resetCooldownOnDeath", true);
 
         BUILDER.push("multiplayerRevive");
         MULTIPLAYER_REVIVE = BUILDER

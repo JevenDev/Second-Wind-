@@ -11,11 +11,11 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.phys.Vec3;
 
 public final class SecondWindService {
     public static final int TICKS_PER_SECOND = 20;
     public static final long TICKS_PER_MC_DAY = 24000L;
+    private static final int DOWNED_SLOWNESS_REFRESH_TICKS = 10;
 
     private SecondWindService() {
     }
@@ -51,11 +51,13 @@ public final class SecondWindService {
         state.setDownedStartGameTime(player.serverLevel().getGameTime());
         state.setForcedDeathFlow(false);
         state.clearReviveChannel();
+        applyDownedMobilityEffects(player);
     }
 
     public static void revive(ServerPlayer player, ReviveReason reason) {
         SecondWindPlayerState state = getState(player);
         state.clearDownedRuntime();
+        clearDownedMobilityEffects(player);
         state.incrementDownPenaltyCount();
         applyReviveHealthAndEffects(player);
         applyCooldown(player);
@@ -65,6 +67,7 @@ public final class SecondWindService {
     public static void failDowned(ServerPlayer player, FailureReason reason) {
         SecondWindPlayerState state = getState(player);
         state.clearDownedRuntime();
+        clearDownedMobilityEffects(player);
         state.incrementDownPenaltyCount();
         state.setForcedDeathFlow(true);
         applyCooldown(player);
@@ -84,7 +87,7 @@ public final class SecondWindService {
             return;
         }
 
-        restrictDownedMovement(player);
+        applyDownedMobilityEffects(player);
         tickReviveChannel(player, state);
         int remaining = state.getDownedTicksRemaining() - 1;
         state.setDownedTicksRemaining(remaining);
@@ -92,6 +95,12 @@ public final class SecondWindService {
             failAndKill(player, FailureReason.TIMER_EXPIRED);
         } else if (remaining % TICKS_PER_SECOND == 0 || remaining <= 60) {
             SecondWindNetworking.syncToPlayer(player);
+        }
+    }
+
+    public static void enforceDownedMovement(ServerPlayer player) {
+        if (isDowned(player)) {
+            applyDownedMobilityEffects(player);
         }
     }
 
@@ -213,6 +222,17 @@ public final class SecondWindService {
         state.setPendingUnsafeExitCooldown(false);
     }
 
+    public static void resetCooldownAfterDeath(ServerPlayer player) {
+        SecondWindPlayerState state = getState(player);
+        state.setCooldownExpiresGameTime(0L);
+        state.setCooldownExpiresEpochMillis(0L);
+        state.setLastMcDayUsed(-1L);
+        state.setConsumedToday(false);
+        state.setConsumedSinceSleep(false);
+        state.setDownPenaltyCount(0);
+        state.setPendingUnsafeExitCooldown(false);
+    }
+
     public static void resetCooldownForNewDayIfNeeded(ServerPlayer player) {
         SecondWindPlayerState state = getState(player);
         if (SecondWindConfig.COOLDOWN_MODE.get() != CooldownMode.MC_DAY) {
@@ -234,6 +254,25 @@ public final class SecondWindService {
             state.incrementDownPenaltyCount();
             applyCooldown(player);
         }
+    }
+
+    public static boolean applyDownedDamageToTimer(ServerPlayer player, float damageAmount) {
+        SecondWindPlayerState state = getState(player);
+        if (!state.isDowned() || damageAmount <= 0.0F) {
+            return false;
+        }
+
+        int timerPenaltyTicks = Math.max(1, Math.round(damageAmount * TICKS_PER_SECOND));
+        int remainingTicks = state.getDownedTicksRemaining() - timerPenaltyTicks;
+        state.setDownedTicksRemaining(remainingTicks);
+
+        if (remainingTicks <= 0) {
+            failAndKill(player, FailureReason.TIMER_EXPIRED);
+            return true;
+        }
+
+        SecondWindNetworking.syncToPlayer(player);
+        return false;
     }
 
     private static long currentMcDay(ServerPlayer player) {
@@ -269,11 +308,18 @@ public final class SecondWindService {
         return reviver.distanceToSqr(downedPlayer) <= maxDistance * maxDistance;
     }
 
-    private static void restrictDownedMovement(ServerPlayer player) {
-        double multiplier = SecondWindConfig.DOWNED_MOVEMENT_MULTIPLIER.get();
-        Vec3 motion = player.getDeltaMovement();
-        double y = motion.y > 0.0D ? motion.y * 0.15D : motion.y;
-        player.setDeltaMovement(motion.x * multiplier, y, motion.z * multiplier);
+    private static void applyDownedMobilityEffects(ServerPlayer player) {
+        int slownessLevel = SecondWindConfig.DOWNED_SLOWNESS_LEVEL.get();
+        if (slownessLevel > 0) {
+            player.addEffect(new MobEffectInstance(
+                    MobEffects.MOVEMENT_SLOWDOWN,
+                    DOWNED_SLOWNESS_REFRESH_TICKS,
+                    slownessLevel - 1,
+                    false,
+                    false,
+                    false));
+        }
+
         player.setSprinting(false);
         player.fallDistance = 0.0F;
         if (player.getAbilities().flying) {
@@ -283,6 +329,11 @@ public final class SecondWindService {
         if (player.isFallFlying()) {
             player.stopFallFlying();
         }
+    }
+
+    private static void clearDownedMobilityEffects(ServerPlayer player) {
+        player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        player.setSprinting(false);
     }
 
     private static void applyReviveHealthAndEffects(ServerPlayer player) {
