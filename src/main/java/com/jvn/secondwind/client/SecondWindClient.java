@@ -58,6 +58,9 @@ public final class SecondWindClient {
                 return;
             }
 
+            minecraft.player.setSprinting(false);
+            minecraft.options.keySprint.setDown(false);
+
             if (giveUpKey.isDown()) {
                 giveUpHeldTicks++;
                 if (giveUpHeldTicks >= GIVE_UP_HOLD_TICKS && !giveUpSent) {
