@@ -13,7 +13,8 @@ public record ClientboundSecondWindStatePayload(
         boolean giveUpAvailable,
         float reviveProgress,
         int cooldownSeconds,
-        boolean showReviveFlash) implements CustomPacketPayload {
+    boolean showReviveFlash,
+    String reviverName) implements CustomPacketPayload {
     public static final Type<ClientboundSecondWindStatePayload> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "state"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundSecondWindStatePayload> STREAM_CODEC =
@@ -27,6 +28,10 @@ public record ClientboundSecondWindStatePayload(
         buffer.writeFloat(payload.reviveProgress);
         buffer.writeVarInt(payload.cooldownSeconds);
         buffer.writeBoolean(payload.showReviveFlash);
+        buffer.writeBoolean(payload.reviverName != null && !payload.reviverName.isBlank());
+        if (payload.reviverName != null && !payload.reviverName.isBlank()) {
+            buffer.writeUtf(payload.reviverName);
+        }
     }
 
     private static ClientboundSecondWindStatePayload read(RegistryFriendlyByteBuf buffer) {
@@ -37,7 +42,8 @@ public record ClientboundSecondWindStatePayload(
                 buffer.readBoolean(),
                 buffer.readFloat(),
                 buffer.readVarInt(),
-                buffer.readBoolean());
+                buffer.readBoolean(),
+                buffer.readBoolean() ? buffer.readUtf() : "");
     }
 
     @Override

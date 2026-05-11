@@ -57,6 +57,7 @@ public final class SecondWindClient {
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
             ClientSecondWindState.tickClient();
+            ClientTrackedDownedPlayers.tickClient();
             SecondWindPostEffects.tickClient();
             Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.player == null) {

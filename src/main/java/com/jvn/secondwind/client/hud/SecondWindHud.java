@@ -41,6 +41,7 @@ public final class SecondWindHud {
     private static final int LAST_STAND_TIMER_CENTER_X = 153;
     private static final int LAST_STAND_TIMER_CENTER_Y = 5;
     private static final int LAST_STAND_TIMER_RED_TICKS = 100;
+    public static final int TIMER_OUTLINE_COLOR = 0xFF000000;
 
     private SecondWindHud() {
     }
@@ -72,6 +73,7 @@ public final class SecondWindHud {
         int y = height - 22 - LAST_STAND_HEIGHT - LAST_STAND_HOTBAR_GAP;
 
         renderLastStandTimer(graphics, x, y);
+        renderBeingRevived(graphics, minecraft.font, width / 2, height / 2 - 18);
         renderGiveUpCountdown(graphics, minecraft.font, width / 2, height / 2 + 12);
     }
 
@@ -98,8 +100,8 @@ public final class SecondWindHud {
                 ? 0.0F
                 : Mth.clamp(displayedTicksRemaining / ClientSecondWindState.maxTicks(), 0.0F, 1.0F);
         int fillWidth = Mth.clamp(Mth.floor(timerProgress * LAST_STAND_FILL_WIDTH), 0, LAST_STAND_FILL_WIDTH);
-        String timerLabel = String.format(Locale.ROOT, "%.1fs", displayedTicksRemaining / 20.0F);
-        int timerColor = displayedTicksRemaining <= LAST_STAND_TIMER_RED_TICKS ? 0xFFFF4040 : 0xFFFFFFFF;
+        String timerLabel = formatTimerLabel(displayedTicksRemaining);
+        int timerColor = timerTextColor(displayedTicksRemaining);
 
         graphics.pose().pushPose();
         graphics.pose().translate(0.0F, 0.0F, 0.0F);
@@ -124,8 +126,16 @@ public final class SecondWindHud {
                 x + LAST_STAND_TIMER_CENTER_X,
                 y + LAST_STAND_TIMER_CENTER_Y,
                 timerColor,
-                0xFF000000);
+                TIMER_OUTLINE_COLOR);
         graphics.pose().popPose();
+    }
+
+    public static String formatTimerLabel(float displayedTicksRemaining) {
+        return String.format(Locale.ROOT, "%.1fs", displayedTicksRemaining / 20.0F);
+    }
+
+    public static int timerTextColor(float displayedTicksRemaining) {
+        return displayedTicksRemaining <= LAST_STAND_TIMER_RED_TICKS ? 0xFFFF4040 : 0xFFFFFFFF;
     }
 
     private static void drawOutlinedCenteredString(
@@ -151,6 +161,18 @@ public final class SecondWindHud {
         }
 
         String timerLabel = String.format(Locale.ROOT, "%.1fs", SecondWindClient.giveUpHoldSecondsRemaining());
-        drawOutlinedCenteredString(graphics, font, timerLabel, centerX, centerY, 0xFFFF4040, 0xFF000000);
+        drawOutlinedCenteredString(graphics, font, timerLabel, centerX, centerY, 0xFFFF4040, TIMER_OUTLINE_COLOR);
+    }
+
+    private static void renderBeingRevived(GuiGraphics graphics, Font font, int centerX, int centerY) {
+        if (ClientSecondWindState.reviveProgress() <= 0.0F) {
+            return;
+        }
+
+        String reviverName = ClientSecondWindState.reviverName();
+        String text = reviverName == null || reviverName.isBlank()
+                ? "Being revived!"
+                : "Being revived by " + reviverName + "!";
+        drawOutlinedCenteredString(graphics, font, text, centerX, centerY, 0xFFFFFFFF, TIMER_OUTLINE_COLOR);
     }
 }

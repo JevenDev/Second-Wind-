@@ -11,7 +11,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class SecondWindNetworking {
-    private static final String NETWORK_VERSION = "2";
+    private static final String NETWORK_VERSION = "3";
 
     private SecondWindNetworking() {
     }
@@ -21,6 +21,7 @@ public final class SecondWindNetworking {
         registrar.playToServer(ServerboundGiveUpPayload.TYPE, ServerboundGiveUpPayload.STREAM_CODEC, SecondWindNetworking::handleGiveUp);
         registrar.playToServer(ServerboundReviveHoldPayload.TYPE, ServerboundReviveHoldPayload.STREAM_CODEC, SecondWindNetworking::handleReviveHold);
         registrar.playToClient(ClientboundSecondWindStatePayload.TYPE, ClientboundSecondWindStatePayload.STREAM_CODEC, SecondWindNetworking::handleClientState);
+        registrar.playToClient(ClientboundTrackedDownedPlayerPayload.TYPE, ClientboundTrackedDownedPlayerPayload.STREAM_CODEC, SecondWindNetworking::handleTrackedPlayerState);
     }
 
     public static void syncToPlayer(ServerPlayer player) {
@@ -37,7 +38,32 @@ public final class SecondWindNetworking {
                 state.isDowned(),
                 state.getReviveChannelProgress(),
                 cooldownSeconds,
-                showReviveFlash));
+                showReviveFlash,
+                currentReviverName(player, state)));
+
+        syncTrackedDownedState(player, state);
+    }
+
+    private static String currentReviverName(ServerPlayer player, SecondWindPlayerState state) {
+        return state.getReviveChannelReviver()
+                .map(player.server.getPlayerList()::getPlayer)
+                .map(ServerPlayer::getName)
+                .map(component -> component.getString())
+                .orElse("");
+    }
+
+    private static void syncTrackedDownedState(ServerPlayer player, SecondWindPlayerState state) {
+        ClientboundTrackedDownedPlayerPayload payload = new ClientboundTrackedDownedPlayerPayload(
+                player.getId(),
+                state.isDowned(),
+                state.getDownedTicksRemaining(),
+                state.getDownedMaxTicks());
+
+        for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {
+            if (other.serverLevel() == player.serverLevel()) {
+                PacketDistributor.sendToPlayer(other, payload);
+            }
+        }
     }
 
     public static void sendGiveUpRequest() {
@@ -73,6 +99,18 @@ public final class SecondWindNetworking {
             stateClass.getMethod("apply", ClientboundSecondWindStatePayload.class).invoke(null, payload);
         } catch (ReflectiveOperationException exception) {
             throw new IllegalStateException("Unable to apply Second Wind client state", exception);
+        }
+    }
+
+    private static void handleTrackedPlayerState(ClientboundTrackedDownedPlayerPayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
+        if (FMLEnvironment.dist != Dist.CLIENT) {
+            return;
+        }
+        try {
+            Class<?> stateClass = Class.forName("com.jvn.secondwind.client.ClientTrackedDownedPlayers");
+            stateClass.getMethod("apply", ClientboundTrackedDownedPlayerPayload.class).invoke(null, payload);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Unable to apply tracked Second Wind player state", exception);
         }
     }
 }

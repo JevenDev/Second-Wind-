@@ -9,6 +9,7 @@ public final class ClientSecondWindState {
     private static int maxTicks;
     private static boolean giveUpAvailable;
     private static float reviveProgress;
+    private static String reviverName = "";
     private static int cooldownSeconds;
     private static int revivedFlashTicks;
     private static long ticksRemainingSyncNanos;
@@ -35,6 +36,7 @@ public final class ClientSecondWindState {
         maxTicks = payload.maxTicks();
         giveUpAvailable = payload.giveUpAvailable();
         reviveProgress = payload.reviveProgress();
+        reviverName = payload.reviverName();
         cooldownSeconds = payload.cooldownSeconds();
         ticksRemainingSyncNanos = System.nanoTime();
         pausedElapsedNanos = 0L;
@@ -76,6 +78,10 @@ public final class ClientSecondWindState {
 
     public static float reviveProgress() {
         return reviveProgress;
+    }
+
+    public static String reviverName() {
+        return reviverName;
     }
 
     public static int cooldownSeconds() {
