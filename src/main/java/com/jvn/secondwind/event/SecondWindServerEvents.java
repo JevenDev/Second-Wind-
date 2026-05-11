@@ -19,6 +19,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerWakeUpEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID)
@@ -124,5 +125,13 @@ public final class SecondWindServerEvents {
             return;
         }
         SecondWindService.interruptReviveChannelsFor(player);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerWakeUp(PlayerWakeUpEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && !event.wakeImmediately()) {
+            SecondWindService.resetCooldownForSleep(player);
+            SecondWindNetworking.syncToPlayer(player);
+        }
     }
 }

@@ -148,23 +148,27 @@ public final class SecondWindService {
         switch (mode) {
             case NONE -> {
                 state.setCooldownExpiresGameTime(0L);
+                state.setCooldownExpiresEpochMillis(0L);
                 state.setConsumedToday(false);
                 state.setConsumedSinceSleep(false);
             }
             case TIMED -> {
                 int seconds = SecondWindConfig.COOLDOWN_DURATION_SECONDS.get();
                 state.setCooldownExpiresGameTime(seconds <= 0 ? 0L : gameTime + seconds * (long) TICKS_PER_SECOND);
+                state.setCooldownExpiresEpochMillis(seconds <= 0 ? 0L : System.currentTimeMillis() + seconds * 1000L);
                 state.setConsumedToday(false);
                 state.setConsumedSinceSleep(false);
             }
             case MC_DAY -> {
                 state.setCooldownExpiresGameTime(0L);
+                state.setCooldownExpiresEpochMillis(0L);
                 state.setLastMcDayUsed(day);
                 state.setConsumedToday(true);
                 state.setConsumedSinceSleep(false);
             }
             case ON_SLEEP -> {
                 state.setCooldownExpiresGameTime(0L);
+                state.setCooldownExpiresEpochMillis(0L);
                 state.setConsumedToday(false);
                 state.setConsumedSinceSleep(true);
             }
@@ -177,7 +181,8 @@ public final class SecondWindService {
         resetCooldownForNewDayIfNeeded(player);
         return switch (SecondWindConfig.COOLDOWN_MODE.get()) {
             case NONE -> false;
-            case TIMED -> state.getCooldownExpiresGameTime() > player.serverLevel().getGameTime();
+            case TIMED -> state.getCooldownExpiresEpochMillis() > System.currentTimeMillis()
+                    || state.getCooldownExpiresGameTime() > player.serverLevel().getGameTime();
             case MC_DAY -> state.hasConsumedToday() && state.getLastMcDayUsed() == currentMcDay(player);
             case ON_SLEEP -> state.hasConsumedSinceSleep();
         };
@@ -187,6 +192,7 @@ public final class SecondWindService {
         SecondWindPlayerState state = getState(player);
         state.setConsumedSinceSleep(false);
         state.setCooldownExpiresGameTime(0L);
+        state.setCooldownExpiresEpochMillis(0L);
         state.setDownPenaltyCount(0);
         state.setPendingUnsafeExitCooldown(false);
     }

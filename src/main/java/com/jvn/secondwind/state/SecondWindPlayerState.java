@@ -18,6 +18,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
     private boolean consumedSinceSleep;
     private boolean forcedDeathFlow;
     private boolean pendingUnsafeExitCooldown;
+    private long cooldownExpiresEpochMillis;
     private UUID reviveChannelReviver;
     private int reviveChannelTicks;
     private int reviveChannelRequiredTicks;
@@ -72,6 +73,14 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
 
     public void setCooldownExpiresGameTime(long cooldownExpiresGameTime) {
         this.cooldownExpiresGameTime = Math.max(0L, cooldownExpiresGameTime);
+    }
+
+    public long getCooldownExpiresEpochMillis() {
+        return cooldownExpiresEpochMillis;
+    }
+
+    public void setCooldownExpiresEpochMillis(long cooldownExpiresEpochMillis) {
+        this.cooldownExpiresEpochMillis = Math.max(0L, cooldownExpiresEpochMillis);
     }
 
     public long getLastMcDayUsed() {
@@ -169,6 +178,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
         tag.putBoolean("PendingUnsafeExitCooldown", unsafeExit);
         tag.putInt("DownPenaltyCount", downPenaltyCount);
         tag.putLong("CooldownExpiresGameTime", cooldownExpiresGameTime);
+        tag.putLong("CooldownExpiresEpochMillis", cooldownExpiresEpochMillis);
         tag.putLong("LastMcDayUsed", lastMcDayUsed);
         tag.putBoolean("ConsumedToday", consumedToday);
         tag.putBoolean("ConsumedSinceSleep", consumedSinceSleep);
@@ -181,6 +191,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
         pendingUnsafeExitCooldown = tag.getBoolean("PendingUnsafeExitCooldown");
         downPenaltyCount = tag.getInt("DownPenaltyCount");
         cooldownExpiresGameTime = tag.getLong("CooldownExpiresGameTime");
+        cooldownExpiresEpochMillis = tag.getLong("CooldownExpiresEpochMillis");
         lastMcDayUsed = tag.contains("LastMcDayUsed") ? tag.getLong("LastMcDayUsed") : -1L;
         consumedToday = tag.getBoolean("ConsumedToday");
         consumedSinceSleep = tag.getBoolean("ConsumedSinceSleep");
