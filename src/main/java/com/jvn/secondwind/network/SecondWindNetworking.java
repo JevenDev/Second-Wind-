@@ -3,8 +3,9 @@ package com.jvn.secondwind.network;
 import com.jvn.secondwind.state.FailureReason;
 import com.jvn.secondwind.state.SecondWindPlayerState;
 import com.jvn.secondwind.state.SecondWindService;
-import com.jvn.secondwind.client.ClientSecondWindState;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -44,6 +45,14 @@ public final class SecondWindNetworking {
     }
 
     private static void handleClientState(ClientboundSecondWindStatePayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
-        ClientSecondWindState.apply(payload);
+        if (FMLEnvironment.dist != Dist.CLIENT) {
+            return;
+        }
+        try {
+            Class<?> stateClass = Class.forName("com.jvn.secondwind.client.ClientSecondWindState");
+            stateClass.getMethod("apply", ClientboundSecondWindStatePayload.class).invoke(null, payload);
+        } catch (ReflectiveOperationException exception) {
+            throw new IllegalStateException("Unable to apply Second Wind client state", exception);
+        }
     }
 }

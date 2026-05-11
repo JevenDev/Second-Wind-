@@ -4,7 +4,6 @@ import com.jvn.secondwind.config.SecondWindConfig;
 import java.util.Optional;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.NeutralMob;
@@ -55,9 +54,5 @@ public final class SecondWindEntityRules {
             return true;
         }
         return SecondWindConfig.ALLOW_PASSIVE_KILLS.get();
-    }
-
-    public static boolean isServerPlayerEntity(Entity entity) {
-        return entity instanceof ServerPlayer;
     }
 }
