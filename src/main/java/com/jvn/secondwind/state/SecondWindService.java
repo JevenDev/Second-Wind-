@@ -6,6 +6,9 @@ import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.util.SecondWindDamageSources;
 import com.jvn.secondwind.util.SecondWindEntityRules;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.particles.DustColorTransitionOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -14,6 +17,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Pose;
+import org.joml.Vector3f;
 
 public final class SecondWindService {
     public static final int TICKS_PER_SECOND = 20;
@@ -26,6 +30,8 @@ public final class SecondWindService {
     private static final int PLAYER_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
     private static final int KILL_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
     private static final int ADMIN_REVIVE_ANNOUNCEMENT_VARIANTS = 2;
+    private static final Vector3f REVIVE_PARTICLE_PURPLE = new Vector3f(0.73F, 0.42F, 0.98F);
+    private static final Vector3f REVIVE_PARTICLE_WHITE = new Vector3f(0.98F, 0.96F, 1.0F);
 
     private SecondWindService() {
     }
@@ -108,6 +114,7 @@ public final class SecondWindService {
         state.incrementDownPenaltyCount();
         applyReviveHealthAndEffects(player);
         applyCooldown(player);
+        spawnRevivePopParticles(player);
         announcePlayerRevived(player, reason);
         SecondWindCriteria.triggerRevive(player, reason, remainingTicks, LAST_SECOND_REVIVE_TICKS, reviver, downer);
         SecondWindNetworking.syncToPlayer(player, true);
@@ -391,7 +398,8 @@ public final class SecondWindService {
 
     private static void announcePlayerDowned(ServerPlayer player) {
         int variant = player.getRandom().nextInt(DOWNED_ANNOUNCEMENT_VARIANTS);
-        Component message = Component.translatable("message.secondwind.downed." + variant, player.getDisplayName());
+        Component message = Component.translatable("message.secondwind.downed." + variant, player.getDisplayName())
+                .withStyle(ChatFormatting.RED);
         player.server.getPlayerList().broadcastSystemMessage(message, false);
     }
 
@@ -407,8 +415,30 @@ public final class SecondWindService {
             case KILL -> "kill";
             case ADMIN -> "admin";
         };
-        Component message = Component.translatable("message.secondwind.revived." + reasonKey + "." + variant, player.getDisplayName());
+        Component message = Component.translatable("message.secondwind.revived." + reasonKey + "." + variant, player.getDisplayName())
+            .withStyle(ChatFormatting.GREEN);
         player.server.getPlayerList().broadcastSystemMessage(message, false);
+    }
+
+    private static void spawnRevivePopParticles(ServerPlayer player) {
+        double centerX = player.getX();
+        double centerY = player.getY() + player.getBbHeight() * 0.55D;
+        double centerZ = player.getZ();
+        double width = player.getBbWidth() * 0.45D;
+        double height = player.getBbHeight() * 0.35D;
+
+        DustColorTransitionOptions purpleToWhite = new DustColorTransitionOptions(
+                REVIVE_PARTICLE_PURPLE,
+                REVIVE_PARTICLE_WHITE,
+                1.35F);
+        DustColorTransitionOptions whiteToPurple = new DustColorTransitionOptions(
+                REVIVE_PARTICLE_WHITE,
+                REVIVE_PARTICLE_PURPLE,
+                0.95F);
+
+        player.serverLevel().sendParticles(purpleToWhite, centerX, centerY, centerZ, 28, width, height, width, 0.08D);
+        player.serverLevel().sendParticles(whiteToPurple, centerX, centerY + 0.2D, centerZ, 16, width * 0.65D, height * 0.8D, width * 0.65D, 0.02D);
+        player.serverLevel().sendParticles(ParticleTypes.END_ROD, centerX, centerY + 0.1D, centerZ, 10, width * 0.4D, height * 0.75D, width * 0.4D, 0.02D);
     }
 
     private static void tickReviveChannel(ServerPlayer downedPlayer, SecondWindPlayerState state) {

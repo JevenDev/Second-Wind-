@@ -105,14 +105,7 @@ public final class SecondWindHud {
             return;
         }
 
-        Minecraft minecraft = Minecraft.getInstance();
-        GuiGraphics graphics = event.getGuiGraphics();
-        Font font = minecraft.font;
-        int width = minecraft.getWindow().getGuiScaledWidth();
-        int height = minecraft.getWindow().getGuiScaledHeight();
-        int alpha = Math.min(255, ticks * 8);
-        int color = alpha << 24 | 0x61D394;
-        graphics.drawCenteredString(font, Component.literal("SECOND WIND"), width / 2, height / 2 - 28, color);
+        SecondWindReviveFlashEffect.render(event.getGuiGraphics(), ticks);
     }
 
     private static void renderLastStandTimer(GuiGraphics graphics, int x, int y) {

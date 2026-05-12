@@ -1,5 +1,6 @@
 package com.jvn.secondwind.client;
 
+import com.jvn.secondwind.client.hud.SecondWindReviveFlashEffect;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.ClientboundSecondWindStatePayload;
 import net.minecraft.client.Minecraft;
@@ -40,7 +41,7 @@ public final class ClientSecondWindState {
         boolean hadReviveOverlay = hasReviveOverlay();
         downed = payload.downed();
         if (payload.showReviveFlash()) {
-            revivedFlashTicks = 50;
+            revivedFlashTicks = SecondWindReviveFlashEffect.DURATION_TICKS;
         }
         ticksRemaining = payload.ticksRemaining();
         maxTicks = payload.maxTicks();

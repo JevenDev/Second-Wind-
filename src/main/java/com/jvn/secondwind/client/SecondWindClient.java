@@ -1,8 +1,8 @@
 package com.jvn.secondwind.client;
 
 import com.jvn.secondwind.SecondWindMod;
-import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.client.hud.SecondWindHud;
+import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.client.shader.SecondWindPostEffects;
 import com.mojang.blaze3d.platform.InputConstants;
