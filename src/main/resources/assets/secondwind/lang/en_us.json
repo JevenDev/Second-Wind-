@@ -1,5 +1,6 @@
 {
   "mod.secondwind": "Second Wind!",
+  "item.secondwind.second_wind_pop": "Second Wind",
   "death.attack.secondwind.easy_way_out": "%1$s took the easy way out",
   "death.attack.secondwind.easy_way_out.because": "%1$s took the easy way out because %2$s",
   "message.secondwind.downed.0": "%1$s was downed!",

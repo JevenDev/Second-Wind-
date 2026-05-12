@@ -42,6 +42,8 @@ public final class ClientSecondWindState {
         downed = payload.downed();
         if (payload.showReviveFlash()) {
             revivedFlashTicks = SecondWindReviveFlashEffect.DURATION_TICKS;
+            SecondWindReviveFlashEffect.beginActivation();
+            SecondWindClient.playReviveItemActivation();
         }
         ticksRemaining = payload.ticksRemaining();
         maxTicks = payload.maxTicks();

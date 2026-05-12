@@ -3,6 +3,7 @@ package com.jvn.secondwind;
 import com.jvn.secondwind.advancement.SecondWindCriteria;
 import com.mojang.logging.LogUtils;
 import com.jvn.secondwind.config.SecondWindConfig;
+import com.jvn.secondwind.item.SecondWindItems;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.state.SecondWindData;
 import net.neoforged.bus.api.IEventBus;
@@ -20,6 +21,7 @@ public final class SecondWindMod {
     public SecondWindMod(IEventBus modEventBus, ModContainer modContainer) {
         SecondWindCriteria.TRIGGER_TYPES.register(modEventBus);
         SecondWindData.ATTACHMENT_TYPES.register(modEventBus);
+        SecondWindItems.register(modEventBus);
         modEventBus.addListener(SecondWindNetworking::registerPayloads);
         modContainer.registerConfig(ModConfig.Type.COMMON, SecondWindConfig.SPEC);
         if (FMLEnvironment.dist.isClient()) {

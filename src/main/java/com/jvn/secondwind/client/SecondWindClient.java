@@ -3,6 +3,7 @@ package com.jvn.secondwind.client;
 import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.client.hud.SecondWindHud;
 import com.jvn.secondwind.config.SecondWindConfig;
+import com.jvn.secondwind.item.SecondWindItems;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.client.shader.SecondWindPostEffects;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -197,6 +198,15 @@ public final class SecondWindClient {
     private static void resetGiveUpHold() {
         giveUpHeldTicks = 0;
         giveUpSent = false;
+    }
+
+    public static void playReviveItemActivation() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.gameRenderer == null) {
+            return;
+        }
+
+        minecraft.gameRenderer.displayItemActivation(SecondWindItems.SECOND_WIND_POP.toStack());
     }
 
     public static Component giveUpKeyName() {
