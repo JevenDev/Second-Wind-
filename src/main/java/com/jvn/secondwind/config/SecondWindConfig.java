@@ -10,7 +10,7 @@ public final class SecondWindConfig {
     public static final ModConfigSpec.IntValue TIMER_PENALTY_PER_DOWN;
     public static final ModConfigSpec.IntValue DOWNED_SLOWNESS_LEVEL;
     public static final ModConfigSpec.BooleanValue DOWNED_DAMAGE_REDUCES_TIMER;
-        public static final ModConfigSpec.IntValue DOWNED_DAMAGE_COOLDOWN_TICKS;
+    public static final ModConfigSpec.IntValue DOWNED_DAMAGE_COOLDOWN_TICKS;
     public static final ModConfigSpec.BooleanValue DOWNED_DAMAGE_REGISTERS;
     public static final ModConfigSpec.BooleanValue BLOCK_HEALING_WHILE_DOWNED;
     public static final ModConfigSpec.BooleanValue BLOCK_EATING_WHILE_DOWNED;
@@ -40,7 +40,7 @@ public final class SecondWindConfig {
 
         DOWNED_TIMER_SECONDS = BUILDER
                 .comment("Base number of seconds a player remains downed before dying.")
-                .defineInRange("downedTimerSeconds", 10, 3, 60);
+                .defineInRange("downedTimerSeconds", 12, 3, 60);
         MINIMUM_DOWNED_TIMER_SECONDS = BUILDER
                 .comment("Minimum downed timer after repeated-down penalties are applied.")
                 .defineInRange("minimumDownedTimerSeconds", 3, 1, 30);
