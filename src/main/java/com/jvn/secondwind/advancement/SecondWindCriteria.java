@@ -25,11 +25,12 @@ public final class SecondWindCriteria {
             int lastSecondThresholdTicks,
             ServerPlayer reviver,
             ServerPlayer downer) {
+        boolean isLastSecondRevive = remainingTicks > 0 && remainingTicks <= lastSecondThresholdTicks;
         if (reason == ReviveReason.ADMIN) {
             return;
         }
 
-        if (remainingTicks > 0 && remainingTicks <= lastSecondThresholdTicks) {
+        if (isLastSecondRevive) {
             REVIVE.get().trigger(revivedPlayer, SecondWindReviveTrigger.ReviveEvent.JUST_IN_TIME);
         }
 
@@ -38,6 +39,9 @@ public final class SecondWindCriteria {
             case PLAYER_REVIVE -> {
                 REVIVE.get().trigger(revivedPlayer, SecondWindReviveTrigger.ReviveEvent.REVIVED_BY_PLAYER);
                 if (reviver != null && reviver != revivedPlayer) {
+                    if (isLastSecondRevive) {
+                        REVIVE.get().trigger(reviver, SecondWindReviveTrigger.ReviveEvent.JUST_IN_TIME);
+                    }
                     REVIVE.get().trigger(reviver, SecondWindReviveTrigger.ReviveEvent.REVIVE_PLAYER);
                     if (downer != null && downer.getUUID().equals(reviver.getUUID())) {
                         REVIVE.get().trigger(reviver, SecondWindReviveTrigger.ReviveEvent.DOWN_AND_REVIVE);

@@ -28,9 +28,6 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID)
 public final class SecondWindServerEvents {
-    private static final float DOWNED_SAFE_HEALTH = 1.0F;
-    private static final int DOWNED_ANNOUNCEMENT_VARIANTS = 7;
-
     private SecondWindServerEvents() {
     }
 
@@ -54,23 +51,8 @@ public final class SecondWindServerEvents {
         }
 
         event.setCanceled(true);
-        SecondWindService.enterDowned(player, event.getSource());
-        player.setHealth(DOWNED_SAFE_HEALTH);
-        player.fallDistance = 0.0F;
-        player.setDeltaMovement(player.getDeltaMovement().multiply(0.15D, 0.0D, 0.15D));
-
-        if (SecondWindConfig.ENABLE_SOUNDS.get()) {
-            player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 0.8F, 0.6F);
-        }
-
-        announcePlayerDowned(player);
-        SecondWindNetworking.syncToPlayer(player);
-    }
-
-    private static void announcePlayerDowned(ServerPlayer player) {
-        int variant = player.getRandom().nextInt(DOWNED_ANNOUNCEMENT_VARIANTS);
-        Component message = Component.translatable("message.secondwind.downed." + variant, player.getDisplayName());
-        player.server.getPlayerList().broadcastSystemMessage(message, false);
+        SecondWindService.down(player, event.getSource());
+        handleDowningToRevive(player, event.getSource());
     }
 
     private static void handleKillToRevive(LivingDeathEvent event) {
@@ -81,6 +63,20 @@ public final class SecondWindServerEvents {
 
         ServerPlayer player = creditedPlayer.get();
         if (!SecondWindService.isDowned(player) || !SecondWindEntityRules.isValidReviveTarget(event.getEntity(), player)) {
+            return;
+        }
+
+        SecondWindService.revive(player, ReviveReason.KILL);
+    }
+
+    private static void handleDowningToRevive(ServerPlayer target, net.minecraft.world.damagesource.DamageSource damageSource) {
+        Optional<ServerPlayer> creditedPlayer = SecondWindEntityRules.findCreditedPlayer(damageSource);
+        if (creditedPlayer.isEmpty()) {
+            return;
+        }
+
+        ServerPlayer player = creditedPlayer.get();
+        if (!SecondWindService.isDowned(player) || !SecondWindEntityRules.isValidReviveTarget(target, player)) {
             return;
         }
 

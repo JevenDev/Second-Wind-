@@ -18,9 +18,11 @@ import net.minecraft.world.entity.Pose;
 public final class SecondWindService {
     public static final int TICKS_PER_SECOND = 20;
     public static final long TICKS_PER_MC_DAY = 24000L;
+    private static final float DOWNED_SAFE_HEALTH = 1.0F;
     private static final int DOWNED_SLOWNESS_REFRESH_TICKS = 10;
     private static final int LAST_SECOND_REVIVE_TICKS = Math.max(1, TICKS_PER_SECOND / 10);
     private static final int REVIVE_HOLD_GRACE_TICKS = 2;
+    private static final int DOWNED_ANNOUNCEMENT_VARIANTS = 7;
     private static final int PLAYER_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
     private static final int KILL_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
     private static final int ADMIN_REVIVE_ANNOUNCEMENT_VARIANTS = 2;
@@ -34,6 +36,29 @@ public final class SecondWindService {
 
     public static boolean isDowned(ServerPlayer player) {
         return getState(player).isDowned();
+    }
+
+    public static boolean canEnterDownedState(ServerPlayer player) {
+        return !isDowned(player) && !player.isCreative() && !player.isSpectator();
+    }
+
+    public static boolean down(ServerPlayer player, DamageSource damageSource) {
+        if (!canEnterDownedState(player)) {
+            return false;
+        }
+
+        enterDowned(player, damageSource);
+        player.setHealth(DOWNED_SAFE_HEALTH);
+        player.fallDistance = 0.0F;
+        player.setDeltaMovement(player.getDeltaMovement().multiply(0.15D, 0.0D, 0.15D));
+
+        if (SecondWindConfig.ENABLE_SOUNDS.get()) {
+            player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 0.8F, 0.6F);
+        }
+
+        announcePlayerDowned(player);
+        SecondWindNetworking.syncToPlayer(player);
+        return true;
     }
 
     public static boolean canTriggerSecondWind(ServerPlayer player, DamageSource damageSource) {
@@ -57,6 +82,7 @@ public final class SecondWindService {
         state.setDownedMaxTicks(ticks);
         state.setDownedTicksRemaining(ticks);
         state.setDownedStartGameTime(player.serverLevel().getGameTime());
+        state.setLastDownedDamageGameTime(0L);
         state.setDownedByPlayer(SecondWindEntityRules.findCreditedPlayer(damageSource)
             .filter(attacker -> attacker != player)
             .map(ServerPlayer::getUUID)
@@ -333,9 +359,17 @@ public final class SecondWindService {
             return false;
         }
 
+        int cooldownTicks = SecondWindConfig.DOWNED_DAMAGE_COOLDOWN_TICKS.get();
+        long gameTime = player.serverLevel().getGameTime();
+        if (cooldownTicks > 0 && state.getLastDownedDamageGameTime() > 0L
+                && gameTime - state.getLastDownedDamageGameTime() < cooldownTicks) {
+            return false;
+        }
+
         int timerPenaltyTicks = Math.max(1, Math.round(damageAmount * TICKS_PER_SECOND));
         int remainingTicks = state.getDownedTicksRemaining() - timerPenaltyTicks;
         state.setDownedTicksRemaining(remainingTicks);
+        state.setLastDownedDamageGameTime(gameTime);
 
         if (remainingTicks <= 0) {
             if (damageSource != null) {
@@ -353,6 +387,12 @@ public final class SecondWindService {
 
     private static long currentMcDay(ServerPlayer player) {
         return player.serverLevel().getDayTime() / TICKS_PER_MC_DAY;
+    }
+
+    private static void announcePlayerDowned(ServerPlayer player) {
+        int variant = player.getRandom().nextInt(DOWNED_ANNOUNCEMENT_VARIANTS);
+        Component message = Component.translatable("message.secondwind.downed." + variant, player.getDisplayName());
+        player.server.getPlayerList().broadcastSystemMessage(message, false);
     }
 
     private static void announcePlayerRevived(ServerPlayer player, ReviveReason reason) {

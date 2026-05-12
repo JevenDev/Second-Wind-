@@ -27,7 +27,8 @@ public final class SecondWindCommands {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
         dispatcher.register(Commands.literal("secondwind")
                 .requires(source -> source.hasPermission(ADMIN_PERMISSION_LEVEL))
-                .then(buildReviveCommand("revive")));
+                .then(buildReviveCommand("revive"))
+                .then(buildDownCommand("down")));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> buildReviveCommand(String name) {
@@ -38,6 +39,15 @@ public final class SecondWindCommands {
                                 context.getSource(),
                                 EntityArgument.getPlayer(context, "player"))));
     }
+
+                private static LiteralArgumentBuilder<CommandSourceStack> buildDownCommand(String name) {
+                return Commands.literal(name)
+                    .executes(context -> downAll(context.getSource()))
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .executes(context -> downPlayer(
+                            context.getSource(),
+                            EntityArgument.getPlayer(context, "player"))));
+                }
 
     private static int reviveAll(CommandSourceStack source) {
         List<ServerPlayer> downedPlayers = source.getServer().getPlayerList().getPlayers().stream()
@@ -64,6 +74,40 @@ public final class SecondWindCommands {
         SecondWindService.revive(player, ReviveReason.ADMIN);
         source.sendSuccess(
                 () -> Component.translatable("commands.secondwind.revive.single.success", player.getDisplayName()),
+                true);
+        return 1;
+    }
+
+    private static int downAll(CommandSourceStack source) {
+        List<ServerPlayer> availablePlayers = source.getServer().getPlayerList().getPlayers().stream()
+                .filter(SecondWindService::canEnterDownedState)
+                .toList();
+        if (availablePlayers.isEmpty()) {
+            source.sendFailure(Component.translatable("commands.secondwind.down.all.none"));
+            return 0;
+        }
+
+        availablePlayers.forEach(player -> SecondWindService.down(player, player.damageSources().generic()));
+        source.sendSuccess(
+                () -> Component.translatable("commands.secondwind.down.all.success", availablePlayers.size()),
+                true);
+        return availablePlayers.size();
+    }
+
+    private static int downPlayer(CommandSourceStack source, ServerPlayer player) {
+        if (SecondWindService.isDowned(player)) {
+            source.sendFailure(Component.translatable("commands.secondwind.down.single.already_downed", player.getDisplayName()));
+            return 0;
+        }
+
+        if (player.isCreative() || player.isSpectator()) {
+            source.sendFailure(Component.translatable("commands.secondwind.down.single.invalid_target", player.getDisplayName()));
+            return 0;
+        }
+
+        SecondWindService.down(player, player.damageSources().generic());
+        source.sendSuccess(
+                () -> Component.translatable("commands.secondwind.down.single.success", player.getDisplayName()),
                 true);
         return 1;
     }

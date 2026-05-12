@@ -10,6 +10,7 @@ public final class SecondWindConfig {
     public static final ModConfigSpec.IntValue TIMER_PENALTY_PER_DOWN;
     public static final ModConfigSpec.IntValue DOWNED_SLOWNESS_LEVEL;
     public static final ModConfigSpec.BooleanValue DOWNED_DAMAGE_REDUCES_TIMER;
+        public static final ModConfigSpec.IntValue DOWNED_DAMAGE_COOLDOWN_TICKS;
     public static final ModConfigSpec.BooleanValue DOWNED_DAMAGE_REGISTERS;
     public static final ModConfigSpec.BooleanValue BLOCK_HEALING_WHILE_DOWNED;
     public static final ModConfigSpec.BooleanValue BLOCK_EATING_WHILE_DOWNED;
@@ -52,6 +53,9 @@ public final class SecondWindConfig {
         DOWNED_DAMAGE_REDUCES_TIMER = BUILDER
                 .comment("When a downed player is hit, reduce their remaining downed timer based on the incoming damage amount.")
                 .define("downedDamageReducesTimer", true);
+        DOWNED_DAMAGE_COOLDOWN_TICKS = BUILDER
+                .comment("Minimum number of ticks between hits that can reduce a downed player's timer.")
+                .defineInRange("downedDamageCooldownTicks", 30, 0, 100);
         DOWNED_DAMAGE_REGISTERS = BUILDER
                 .comment("Allow hits against downed players to continue applying normal Minecraft damage in addition to any timer reduction.")
                 .define("downedDamageRegisters", false);
