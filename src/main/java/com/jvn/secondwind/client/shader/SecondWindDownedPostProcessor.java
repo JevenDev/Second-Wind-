@@ -46,7 +46,7 @@ public final class SecondWindDownedPostProcessor {
         this.vignetteStrength = blend * (SecondWindConfig.ENABLE_DOWNED_VIGNETTE.get() ? 0.78F + urgency * 0.18F : 0.0F);
         this.desaturationStrength = blend * (SecondWindConfig.ENABLE_DESATURATION.get() ? 0.72F + urgency * 0.16F : 0.0F);
         this.tintStrength = blend * (SecondWindConfig.ENABLE_DESATURATION.get() ? 0.46F + urgency * 0.32F : 0.0F);
-        this.bloomStrength = blend * (SecondWindConfig.ENABLE_DOWNED_BLOOM.get() ? 0.14F + urgency * 0.22F : 0.0F);
+        this.bloomStrength = 0.0F;
         this.pulseStrength = blend * (0.015F + urgency * 0.035F);
         this.active = blend > 0.02F && (vignetteStrength > 0.0F || desaturationStrength > 0.0F || bloomStrength > 0.0F);
         if (!this.active) {
