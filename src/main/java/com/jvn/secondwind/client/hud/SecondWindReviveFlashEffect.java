@@ -1,5 +1,6 @@
 package com.jvn.secondwind.client.hud;
 
+import com.jvn.secondwind.client.ClientSecondWindState;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -7,7 +8,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import team.lodestar.lodestone.modules.core.easing.Easing;
 
 public final class SecondWindReviveFlashEffect {
     public static final int DURATION_TICKS = 56;
@@ -46,12 +46,14 @@ public final class SecondWindReviveFlashEffect {
         Font font = minecraft.font;
         int width = minecraft.getWindow().getGuiScaledWidth();
         int height = minecraft.getWindow().getGuiScaledHeight();
-        float partialTick = minecraft.getTimer().getGameTimeDeltaPartialTick(false);
+        float partialTick = ClientSecondWindState.shouldFreezeUiAnimations()
+                ? 0.0F
+                : minecraft.getTimer().getGameTimeDeltaPartialTick(false);
         float elapsedTicks = Mth.clamp(DURATION_TICKS - ticksRemaining + partialTick, 0.0F, DURATION_TICKS);
         float progress = elapsedTicks / (float) DURATION_TICKS;
-        float intro = Easing.CUBIC_OUT.ease(Mth.clamp(progress / 0.16F, 0.0F, 1.0F));
-        float settle = Easing.SINE_OUT.ease(Mth.clamp(progress / 0.26F, 0.0F, 1.0F));
-        float outro = Easing.SINE_IN.ease(Mth.clamp((progress - 0.62F) / 0.38F, 0.0F, 1.0F));
+        float intro = cubicOut(Mth.clamp(progress / 0.16F, 0.0F, 1.0F));
+        float settle = sineOut(Mth.clamp(progress / 0.26F, 0.0F, 1.0F));
+        float outro = sineIn(Mth.clamp((progress - 0.62F) / 0.38F, 0.0F, 1.0F));
         float visibility = 1.0F - outro;
         float pulse = 1.0F + 0.03F * Mth.sin(progress * 15.0F) * visibility;
         float baseScale = (3.0F + 0.24F * (1.0F - settle) + 0.06F * visibility) * pulse;
@@ -64,7 +66,7 @@ public final class SecondWindReviveFlashEffect {
         float activationProgress = Mth.clamp(elapsedTicks / VANILLA_ACTIVATION_TICKS, 0.0F, 1.0F);
         float activationCurve = vanillaActivationCurve(activationProgress);
         float activationAngle = activationCurve * (float) Math.PI;
-        float activationBlend = 1.0F - Easing.SINE_IN.ease(Mth.clamp((elapsedTicks - 20.0F) / 18.0F, 0.0F, 1.0F));
+        float activationBlend = 1.0F - sineIn(Mth.clamp((elapsedTicks - 20.0F) / 18.0F, 0.0F, 1.0F));
         float vanillaScaleMultiplier = 1.0F + 0.5F * Mth.sin(activationAngle) + 0.12F * (1.0F - activationProgress);
         float scale = baseScale * Mth.lerp(activationBlend, 1.0F, vanillaScaleMultiplier);
         float popCenterX = width / 2.0F + activationOffsetX * width * 0.13F * activationBlend;
@@ -145,6 +147,18 @@ public final class SecondWindReviveFlashEffect {
         float fourth = cubed * progress;
         float fifth = fourth * progress;
         return 10.25F * fifth - 24.95F * fourth + 25.5F * cubed - 13.8F * squared + 4.0F * progress;
+    }
+
+    private static float cubicOut(float value) {
+        return 1.0F - (float) Math.pow(1.0F - value, 3.0D);
+    }
+
+    private static float sineIn(float value) {
+        return 1.0F - Mth.cos(value * Mth.PI / 2.0F);
+    }
+
+    private static float sineOut(float value) {
+        return Mth.sin(value * Mth.PI / 2.0F);
     }
 
     private static int applyAlpha(int color, float alpha) {

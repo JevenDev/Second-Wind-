@@ -27,10 +27,3 @@ ${mod_description}
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
-
-[[dependencies.${mod_id}]]
-    modId="lodestone"
-    type="required"
-    versionRange="[1.8.2,)"
-    ordering="NONE"
-    side="CLIENT"

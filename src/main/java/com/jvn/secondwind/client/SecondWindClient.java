@@ -18,7 +18,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
@@ -42,7 +41,7 @@ public final class SecondWindClient {
 
     public static void register(IEventBus modEventBus) {
         modEventBus.addListener(SecondWindClient::registerKeys);
-        modEventBus.addListener(SecondWindClient::onClientSetup);
+        modEventBus.addListener(SecondWindPostEffects::registerReloadListeners);
         modEventBus.addListener(SecondWindHud::registerGuiLayers);
     }
 
@@ -53,10 +52,6 @@ public final class SecondWindClient {
                 GLFW.GLFW_KEY_R,
                 "key.categories.secondwind");
         event.register(giveUpKey);
-    }
-
-    private static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(SecondWindPostEffects::register);
     }
 
     @EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)

@@ -129,6 +129,10 @@ public final class ClientSecondWindState {
     }
 
     public static void tickClient() {
+        if (shouldFreezeForLocalPause()) {
+            return;
+        }
+
         if (revivedFlashTicks > 0) {
             revivedFlashTicks--;
         }
@@ -187,6 +191,10 @@ public final class ClientSecondWindState {
 
     private static boolean shouldFreezeDisplayedTimer() {
         return timerPaused || shouldFreezeForLocalPause();
+    }
+
+    public static boolean shouldFreezeUiAnimations() {
+        return shouldFreezeForLocalPause();
     }
 
     private static boolean shouldFreezeForLocalPause() {

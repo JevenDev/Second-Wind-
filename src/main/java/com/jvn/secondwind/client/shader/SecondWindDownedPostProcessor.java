@@ -1,14 +1,23 @@
 package com.jvn.secondwind.client.shader;
 
 import com.jvn.secondwind.SecondWindMod;
+import com.google.gson.JsonParseException;
 import com.jvn.secondwind.config.SecondWindConfig;
-import net.minecraft.client.renderer.EffectInstance;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.PostChain;
 import net.minecraft.resources.ResourceLocation;
-import org.joml.Matrix4f;
-import team.lodestar.lodestone.systems.postprocess.PostProcessor;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
-public final class SecondWindDownedPostProcessor extends PostProcessor {
+import java.io.IOException;
+
+@EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)
+public final class SecondWindDownedPostProcessor {
     public static final SecondWindDownedPostProcessor INSTANCE = new SecondWindDownedPostProcessor();
+    private static final ResourceLocation POST_CHAIN_LOCATION =
+            ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "shaders/post/downed_post.json");
 
     private float blend;
     private float urgency;
@@ -17,14 +26,18 @@ public final class SecondWindDownedPostProcessor extends PostProcessor {
     private float tintStrength;
     private float bloomStrength;
     private float pulseStrength;
+    private float time;
+    private PostChain postChain;
+    private boolean active;
+    private int cachedWidth = -1;
+    private int cachedHeight = -1;
 
     private SecondWindDownedPostProcessor() {
-        setActive(false);
     }
 
-    @Override
-    public ResourceLocation getPostChainLocation() {
-        return ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "downed_post");
+    public void reload() {
+        close();
+        time = 0.0F;
     }
 
     public void updateState(float blend, float urgency) {
@@ -35,27 +48,88 @@ public final class SecondWindDownedPostProcessor extends PostProcessor {
         this.tintStrength = blend * (SecondWindConfig.ENABLE_DESATURATION.get() ? 0.46F + urgency * 0.32F : 0.0F);
         this.bloomStrength = blend * (SecondWindConfig.ENABLE_DOWNED_BLOOM.get() ? 0.14F + urgency * 0.22F : 0.0F);
         this.pulseStrength = blend * (0.015F + urgency * 0.035F);
-        setActive(blend > 0.02F && (vignetteStrength > 0.0F || desaturationStrength > 0.0F || bloomStrength > 0.0F));
+        this.active = blend > 0.02F && (vignetteStrength > 0.0F || desaturationStrength > 0.0F || bloomStrength > 0.0F);
+        if (!this.active) {
+            time = 0.0F;
+        }
     }
 
-    @Override
-    public void beforeProcess(Matrix4f viewModelMatrix) {
-        if (effects == null) {
+    private void render(RenderLevelStageEvent event) {
+        if (!active) {
             return;
         }
 
-        for (EffectInstance effect : effects) {
-            effect.safeGetUniform("DownedBlend").set(blend);
-            effect.safeGetUniform("Urgency").set(urgency);
-            effect.safeGetUniform("PulseStrength").set(pulseStrength);
-            effect.safeGetUniform("VignetteStrength").set(vignetteStrength);
-            effect.safeGetUniform("DesaturationStrength").set(desaturationStrength);
-            effect.safeGetUniform("TintStrength").set(tintStrength);
-            effect.safeGetUniform("BloomStrength").set(bloomStrength);
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null) {
+            return;
+        }
+
+        ensurePostChain(minecraft);
+        if (postChain == null) {
+            return;
+        }
+
+        resizeIfNeeded(minecraft);
+
+        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        time += partialTick / 20.0F;
+
+        postChain.setUniform("time", time);
+        postChain.setUniform("aspectRatio", cachedHeight <= 0 ? 1.0F : (float) cachedWidth / (float) cachedHeight);
+        postChain.setUniform("DownedBlend", blend);
+        postChain.setUniform("Urgency", urgency);
+        postChain.setUniform("PulseStrength", pulseStrength);
+        postChain.setUniform("VignetteStrength", vignetteStrength);
+        postChain.setUniform("DesaturationStrength", desaturationStrength);
+        postChain.setUniform("TintStrength", tintStrength);
+        postChain.setUniform("BloomStrength", bloomStrength);
+        postChain.process(partialTick);
+        minecraft.getMainRenderTarget().bindWrite(false);
+    }
+
+    private void ensurePostChain(Minecraft minecraft) {
+        if (postChain != null) {
+            return;
+        }
+
+        try {
+            postChain = new PostChain(
+                    minecraft.getTextureManager(),
+                    minecraft.getResourceManager(),
+                    minecraft.getMainRenderTarget(),
+                    POST_CHAIN_LOCATION);
+            cachedWidth = minecraft.getWindow().getWidth();
+            cachedHeight = minecraft.getWindow().getHeight();
+            postChain.resize(cachedWidth, cachedHeight);
+        } catch (IOException | JsonParseException exception) {
+            SecondWindMod.LOGGER.error("Failed to load Second Wind post-processing shader", exception);
+            close();
         }
     }
 
-    @Override
-    public void afterProcess() {
+    private void resizeIfNeeded(Minecraft minecraft) {
+        int width = minecraft.getWindow().getWidth();
+        int height = minecraft.getWindow().getHeight();
+        if (width == cachedWidth && height == cachedHeight) {
+            return;
+        }
+
+        cachedWidth = width;
+        cachedHeight = height;
+        postChain.resize(width, height);
+    }
+
+    private void close() {
+        if (postChain != null) {
+            postChain.close();
+            postChain = null;
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+            INSTANCE.render(event);
+        }
     }
 }

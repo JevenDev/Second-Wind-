@@ -3,7 +3,8 @@ package com.jvn.secondwind.client.shader;
 import com.jvn.secondwind.client.ClientSecondWindState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
-import team.lodestar.lodestone.systems.postprocess.PostProcessHandler;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 
 public final class SecondWindPostEffects {
     private static float downedBlend;
@@ -11,10 +12,9 @@ public final class SecondWindPostEffects {
     private SecondWindPostEffects() {
     }
 
-    public static void register() {
-        // Lodestone applies its default uniforms to every pass, so the registered processor
-        // owns a companion copy pass instead of relying on vanilla blit.
-        PostProcessHandler.addInstance(SecondWindDownedPostProcessor.INSTANCE);
+    public static void registerReloadListeners(RegisterClientReloadListenersEvent event) {
+        ResourceManagerReloadListener reloadListener = resourceManager -> SecondWindDownedPostProcessor.INSTANCE.reload();
+        event.registerReloadListener(reloadListener);
     }
 
     public static void tickClient() {
