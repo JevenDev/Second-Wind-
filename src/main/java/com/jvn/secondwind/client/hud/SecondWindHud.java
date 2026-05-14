@@ -5,6 +5,7 @@ import com.jvn.secondwind.client.ClientSecondWindState;
 import com.jvn.secondwind.client.SecondWindClient;
 import com.jvn.toucanlib.client.ToucanColors;
 import com.jvn.toucanlib.client.ToucanHudText;
+import com.jvn.toucanlib.neoforge.client.ToucanGuiLayers;
 import com.jvn.toucanlib.util.ToucanResourceLocations;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -24,9 +25,6 @@ import java.util.Locale;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)
 public final class SecondWindHud {
-    private static final ResourceLocation LAST_STAND_LAYER = ToucanResourceLocations.id(
-            SecondWindMod.MOD_ID,
-            "last_stand_layer");
     private static final ResourceLocation LAST_STAND_BAR_BASE = ToucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_bar_base.png");
@@ -55,7 +53,12 @@ public final class SecondWindHud {
     }
 
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
-        event.registerAbove(VanillaGuiLayers.CHAT, LAST_STAND_LAYER, SecondWindHud::renderHudLayer);
+        ToucanGuiLayers.registerAbove(
+                event,
+                VanillaGuiLayers.CHAT,
+                SecondWindMod.MOD_ID,
+                "last_stand_layer",
+                SecondWindHud::renderHudLayer);
     }
 
     @SubscribeEvent
