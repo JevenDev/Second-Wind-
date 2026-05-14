@@ -152,11 +152,13 @@ dependencies {
     // Example project dependency using a sister or child project:
     // implementation project(":myproject")
 
-    // ToucanLib is built from the sibling workspace for local development.
-    // Build it first with: ../toucanLib/gradlew build
-    def toucanLibNeoForgeJar = file("../toucanLib/neoforge/build/libs/toucanlib-neoforge-${minecraft_version}-${toucanlib_version}.jar")
-    implementation files(toucanLibNeoForgeJar)
-    localRuntime files(toucanLibNeoForgeJar)
+    // ToucanLib is a real runtime mod dependency.
+    // Resolve it through the local composite build when available, or another repository source when configured.
+    def toucanLibCommon = "com.jvn.toucanlib:toucanlib:${toucanlib_version}"
+    def toucanLibNeoForge = "com.jvn.toucanlib:toucanlib-neoforge-${minecraft_version}:${toucanlib_version}"
+    compileOnly toucanLibCommon
+    implementation toucanLibNeoForge
+    localRuntime toucanLibNeoForge
     localRuntime "dev.architectury:architectury-neoforge:${architectury_version}"
 
     // For more info:

@@ -3,10 +3,10 @@ package com.jvn.secondwind.client.hud;
 import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.client.ClientSecondWindState;
 import com.jvn.secondwind.client.SecondWindClient;
-import com.jvn.toucanlib.client.ToucanColors;
-import com.jvn.toucanlib.client.ToucanHudText;
-import com.jvn.toucanlib.neoforge.client.ToucanGuiLayers;
-import com.jvn.toucanlib.util.ToucanResourceLocations;
+import com.jvn.toucanlib.client.toucanColors;
+import com.jvn.toucanlib.client.toucanHudText;
+import com.jvn.toucanlib.neoforge.client.toucanGuiLayers;
+import com.jvn.toucanlib.util.toucanResourceLocations;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -25,13 +25,13 @@ import java.util.Locale;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)
 public final class SecondWindHud {
-    private static final ResourceLocation LAST_STAND_BAR_BASE = ToucanResourceLocations.id(
+    private static final ResourceLocation LAST_STAND_BAR_BASE = toucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_bar_base.png");
-    private static final ResourceLocation LAST_STAND_BAR_FILL = ToucanResourceLocations.id(
+    private static final ResourceLocation LAST_STAND_BAR_FILL = toucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_bar_fill.png");
-    private static final ResourceLocation LAST_STAND_OVERLAY = ToucanResourceLocations.id(
+    private static final ResourceLocation LAST_STAND_OVERLAY = toucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_overlay.png");
     private static final int LAST_STAND_WIDTH = 168;
@@ -53,7 +53,7 @@ public final class SecondWindHud {
     }
 
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
-        ToucanGuiLayers.registerAbove(
+        toucanGuiLayers.registerAbove(
                 event,
                 VanillaGuiLayers.CHAT,
                 SecondWindMod.MOD_ID,
@@ -173,8 +173,8 @@ public final class SecondWindHud {
         }
 
         float alpha = ClientSecondWindState.reviveOverlayAlpha();
-        int textColor = ToucanColors.withAlpha(REVIVE_TEXT_COLOR, alpha);
-        int outlineColor = ToucanColors.withAlpha(TIMER_OUTLINE_COLOR, alpha);
+        int textColor = toucanColors.withAlpha(REVIVE_TEXT_COLOR, alpha);
+        int outlineColor = toucanColors.withAlpha(TIMER_OUTLINE_COLOR, alpha);
         int progressPercent = Math.round(ClientSecondWindState.displayedReviveProgress() * 100.0F);
         String reviverName = ClientSecondWindState.displayedReviverName();
         String statusText = reviverName == null || reviverName.isBlank()
@@ -198,8 +198,8 @@ public final class SecondWindHud {
         }
 
         float alpha = SecondWindClient.reviveOverlayAlpha();
-        int textColor = ToucanColors.withAlpha(REVIVE_TEXT_COLOR, alpha);
-        int outlineColor = ToucanColors.withAlpha(TIMER_OUTLINE_COLOR, alpha);
+        int textColor = toucanColors.withAlpha(REVIVE_TEXT_COLOR, alpha);
+        int outlineColor = toucanColors.withAlpha(TIMER_OUTLINE_COLOR, alpha);
         int progressPercent = Math.round(SecondWindClient.reviveProgress() * 100.0F);
         String targetName = SecondWindClient.reviveTargetName();
         String statusText = targetName == null || targetName.isBlank()
@@ -227,7 +227,7 @@ public final class SecondWindHud {
             int outlineColor) {
         int textX = centerX - font.width(text) / 2;
         int textY = centerY - font.lineHeight / 2;
-        ToucanHudText.drawOutlinedString(graphics, font, text, textX, textY, color, outlineColor);
+        toucanHudText.drawOutlinedString(graphics, font, text, textX, textY, color, outlineColor);
     }
 
     private static void renderGiveUpCountdown(GuiGraphics graphics, Font font, int centerX, int centerY) {
