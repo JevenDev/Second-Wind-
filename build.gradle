@@ -40,6 +40,10 @@ repositories {
         name = 'ModMaven'
         url = 'https://modmaven.dev'
     }
+    maven {
+        name = 'Architectury'
+        url = 'https://maven.architectury.dev/'
+    }
 }
 
 base {
@@ -148,6 +152,13 @@ dependencies {
     // Example project dependency using a sister or child project:
     // implementation project(":myproject")
 
+    // ToucanLib is built from the sibling workspace for local development.
+    // Build it first with: ../toucanLib/gradlew build
+    def toucanLibNeoForgeJar = file("../toucanLib/neoforge/build/libs/toucanlib-neoforge-${minecraft_version}-${toucanlib_version}.jar")
+    implementation files(toucanLibNeoForgeJar)
+    localRuntime files(toucanLibNeoForgeJar)
+    localRuntime "dev.architectury:architectury-neoforge:${architectury_version}"
+
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
@@ -167,6 +178,8 @@ var replaceProperties = [
         mod_issue_tracker      : mod_issue_tracker,
         mod_license            : mod_license,
         mod_version            : mod_version,
+        architectury_version   : architectury_version,
+        toucanlib_version_range: toucanlib_version_range,
 ]
 
 tasks.named("processResources", ProcessResources).configure {
