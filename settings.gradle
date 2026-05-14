@@ -8,19 +8,3 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
-def secondWindProperties = new Properties()
-file("gradle.properties").withInputStream { secondWindProperties.load(it) }
-def toucanLibMinecraftVersion = secondWindProperties.getProperty("minecraft_version")
-def toucanLibCommonModule = "com.jvn.toucanlib:toucanlib"
-def toucanLibModule = "com.jvn.toucanlib:toucanlib-neoforge-${toucanLibMinecraftVersion}"
-
-["../toucanLib", "toucanLib"].collect { file(it) }
-        .find { it.isDirectory() && new File(it, "settings.gradle").isFile() }
-        ?.with { toucanLibDir ->
-            includeBuild(toucanLibDir) {
-                dependencySubstitution {
-                    substitute module(toucanLibCommonModule) using project(":common")
-                    substitute module(toucanLibModule) using project(":neoforge")
-                }
-            }
-        }

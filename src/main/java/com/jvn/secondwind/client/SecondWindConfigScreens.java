@@ -1,6 +1,6 @@
 package com.jvn.secondwind.client;
 
-import com.jvn.toucanlib.neoforge.config.toucanConfigScreens;
+import com.jvn.toucanlib.neoforge.config.ToucanConfigScreens;
 import java.util.function.BiFunction;
 import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.fml.ModContainer;
@@ -11,6 +11,6 @@ public final class SecondWindConfigScreens {
     }
 
     public static void register(ModContainer modContainer) {
-        toucanConfigScreens.register(modContainer, (BiFunction<ModContainer, Screen, Screen>) ConfigurationScreen::new);
+        ToucanConfigScreens.register(modContainer, (BiFunction<ModContainer, Screen, Screen>) ConfigurationScreen::new);
     }
 }

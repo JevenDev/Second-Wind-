@@ -6,7 +6,7 @@ import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.item.SecondWindItems;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.client.shader.SecondWindPostEffects;
-import com.jvn.toucanlib.input.toucanKeybinds;
+import com.jvn.toucanlib.input.ToucanKeybinds;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -24,7 +24,7 @@ import org.lwjgl.glfw.GLFW;
 public final class SecondWindClient {
     private static final int GIVE_UP_HOLD_TICKS = 30;
     private static final int REVIVE_OVERLAY_FADE_TICKS = 6;
-    private static final toucanKeybinds KEYBINDS = toucanKeybinds.create(SecondWindMod.MOD_ID);
+    private static final ToucanKeybinds KEYBINDS = ToucanKeybinds.create(SecondWindMod.MOD_ID);
     private static final KeyMapping GIVE_UP_KEY = KEYBINDS.key("give_up", GLFW.GLFW_KEY_R);
     private static int giveUpHeldTicks;
     private static boolean giveUpSent;

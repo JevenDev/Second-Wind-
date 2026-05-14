@@ -1,8 +1,8 @@
 package com.jvn.secondwind.client.hud;
 
 import com.jvn.secondwind.client.ClientSecondWindState;
-import com.jvn.toucanlib.client.toucanColors;
-import com.jvn.toucanlib.client.toucanEasing;
+import com.jvn.toucanlib.client.ToucanColors;
+import com.jvn.toucanlib.client.ToucanEasing;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -53,9 +53,9 @@ public final class SecondWindReviveFlashEffect {
                 : minecraft.getTimer().getGameTimeDeltaPartialTick(false);
         float elapsedTicks = Mth.clamp(DURATION_TICKS - ticksRemaining + partialTick, 0.0F, DURATION_TICKS);
         float progress = elapsedTicks / (float) DURATION_TICKS;
-        float intro = toucanEasing.easeOutCubic(progress / 0.16F);
-        float settle = toucanEasing.sineOut(progress / 0.26F);
-        float outro = toucanEasing.sineIn((progress - 0.62F) / 0.38F);
+        float intro = ToucanEasing.easeOutCubic(progress / 0.16F);
+        float settle = ToucanEasing.sineOut(progress / 0.26F);
+        float outro = ToucanEasing.sineIn((progress - 0.62F) / 0.38F);
         float visibility = 1.0F - outro;
         float pulse = 1.0F + 0.03F * Mth.sin(progress * 15.0F) * visibility;
         float baseScale = (3.0F + 0.24F * (1.0F - settle) + 0.06F * visibility) * pulse;
@@ -68,7 +68,7 @@ public final class SecondWindReviveFlashEffect {
         float activationProgress = Mth.clamp(elapsedTicks / VANILLA_ACTIVATION_TICKS, 0.0F, 1.0F);
         float activationCurve = vanillaActivationCurve(activationProgress);
         float activationAngle = activationCurve * (float) Math.PI;
-        float activationBlend = 1.0F - toucanEasing.sineIn((elapsedTicks - 20.0F) / 18.0F);
+        float activationBlend = 1.0F - ToucanEasing.sineIn((elapsedTicks - 20.0F) / 18.0F);
         float vanillaScaleMultiplier = 1.0F + 0.5F * Mth.sin(activationAngle) + 0.12F * (1.0F - activationProgress);
         float scale = baseScale * Mth.lerp(activationBlend, 1.0F, vanillaScaleMultiplier);
         float popCenterX = width / 2.0F + activationOffsetX * width * 0.13F * activationBlend;
@@ -80,9 +80,9 @@ public final class SecondWindReviveFlashEffect {
         float glowAlpha = alpha * (0.16F + 0.10F * (1.0F - settle));
         float hotGlowAlpha = alpha * (0.08F + 0.06F * Mth.sin(progress * 10.0F + 0.6F));
 
-        drawCenteredScaledString(graphics, font, TITLE, centerX + 2.0F, centerY + 3.0F, scale + 0.05F, rotation, toucanColors.withAlpha(TITLE_SHADOW_COLOR, alpha * 0.72F));
-        drawCenteredScaledString(graphics, font, TITLE, centerX, centerY, scale + 0.24F, rotation, toucanColors.withAlpha(TITLE_GLOW_COLOR, glowAlpha));
-        drawCenteredScaledString(graphics, font, TITLE, centerX, centerY, scale + 0.11F, rotation, toucanColors.withAlpha(TITLE_HOT_GLOW_COLOR, hotGlowAlpha));
+        drawCenteredScaledString(graphics, font, TITLE, centerX + 2.0F, centerY + 3.0F, scale + 0.05F, rotation, ToucanColors.withAlpha(TITLE_SHADOW_COLOR, alpha * 0.72F));
+        drawCenteredScaledString(graphics, font, TITLE, centerX, centerY, scale + 0.24F, rotation, ToucanColors.withAlpha(TITLE_GLOW_COLOR, glowAlpha));
+        drawCenteredScaledString(graphics, font, TITLE, centerX, centerY, scale + 0.11F, rotation, ToucanColors.withAlpha(TITLE_HOT_GLOW_COLOR, hotGlowAlpha));
         drawCenteredScaledOutlinedString(
                 graphics,
                 font,
@@ -91,8 +91,8 @@ public final class SecondWindReviveFlashEffect {
                 centerY,
                 scale,
                 rotation,
-                toucanColors.withAlpha(TITLE_COLOR, alpha),
-                toucanColors.withAlpha(TITLE_OUTLINE_COLOR, alpha));
+                ToucanColors.withAlpha(TITLE_COLOR, alpha),
+                ToucanColors.withAlpha(TITLE_OUTLINE_COLOR, alpha));
     }
 
     private static void drawCenteredScaledString(

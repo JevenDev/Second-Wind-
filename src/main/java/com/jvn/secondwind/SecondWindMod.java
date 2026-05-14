@@ -1,7 +1,7 @@
 package com.jvn.secondwind;
 
 import com.jvn.secondwind.advancement.SecondWindCriteria;
-import com.jvn.toucanlib.client.toucanClientOnly;
+import com.jvn.toucanlib.client.ToucanClientOnly;
 import com.mojang.logging.LogUtils;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.item.SecondWindItems;
@@ -24,7 +24,7 @@ public final class SecondWindMod {
         SecondWindItems.register(modEventBus);
         modEventBus.addListener(SecondWindNetworking::registerPayloads);
         modContainer.registerConfig(ModConfig.Type.COMMON, SecondWindConfig.SPEC);
-        toucanClientOnly.run(() -> {
+        ToucanClientOnly.run(() -> {
             com.jvn.secondwind.client.SecondWindClient.register(modEventBus);
             com.jvn.secondwind.client.SecondWindConfigScreens.register(modContainer);
         });

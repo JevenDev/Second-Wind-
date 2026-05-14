@@ -4,7 +4,7 @@ import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.state.FailureReason;
 import com.jvn.secondwind.state.SecondWindPlayerState;
 import com.jvn.secondwind.state.SecondWindService;
-import com.jvn.toucanlib.neoforge.network.toucanNetwork;
+import com.jvn.toucanlib.neoforge.network.ToucanNetwork;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -16,7 +16,7 @@ public final class SecondWindNetworking {
     }
 
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        toucanNetwork network = toucanNetwork.create(SecondWindMod.MOD_ID, NETWORK_VERSION, event);
+        ToucanNetwork network = ToucanNetwork.create(SecondWindMod.MOD_ID, NETWORK_VERSION, event);
         network.playToServer(ServerboundGiveUpPayload.TYPE, ServerboundGiveUpPayload.STREAM_CODEC, SecondWindNetworking::handleGiveUp);
         network.playToServer(ServerboundReviveHoldPayload.TYPE, ServerboundReviveHoldPayload.STREAM_CODEC, SecondWindNetworking::handleReviveHold);
         network.safePlayToClient(
@@ -84,7 +84,7 @@ public final class SecondWindNetworking {
     }
 
     private static void handleGiveUp(ServerboundGiveUpPayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
-        toucanNetwork.withServerPlayer(context, player -> {
+        ToucanNetwork.withServerPlayer(context, player -> {
             if (SecondWindService.isDowned(player)) {
                 SecondWindService.failAndKill(player, FailureReason.GIVE_UP);
             }
@@ -92,7 +92,7 @@ public final class SecondWindNetworking {
     }
 
     private static void handleReviveHold(ServerboundReviveHoldPayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
-        toucanNetwork.withServerPlayer(context, reviver -> {
+        ToucanNetwork.withServerPlayer(context, reviver -> {
             if (reviver.serverLevel().getEntity(payload.targetEntityId()) instanceof ServerPlayer downedPlayer) {
                 SecondWindService.refreshReviveChannel(reviver, downedPlayer);
             }

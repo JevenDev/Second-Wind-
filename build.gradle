@@ -33,6 +33,13 @@ sourceSets.main.resources {
 repositories {
     // Add here additional repositories if required by some of the dependencies below.
     maven {
+        name = 'CurseForge'
+        url = 'https://minecraft.curseforge.com/api/maven/'
+        metadataSources {
+            artifact()
+        }
+    }
+    maven {
         name = 'Modrinth'
         url = 'https://api.modrinth.com/maven'
     }
@@ -153,10 +160,7 @@ dependencies {
     // implementation project(":myproject")
 
     // ToucanLib is a real runtime mod dependency.
-    // Resolve it through the local composite build when available, or another repository source when configured.
-    def toucanLibCommon = "com.jvn.toucanlib:toucanlib:${toucanlib_version}"
-    def toucanLibNeoForge = "com.jvn.toucanlib:toucanlib-neoforge-${minecraft_version}:${toucanlib_version}"
-    compileOnly toucanLibCommon
+    def toucanLibNeoForge = "toucanlib:toucanlib-neoforge:${minecraft_version}:${toucanlib_version}"
     implementation toucanLibNeoForge
     localRuntime toucanLibNeoForge
     localRuntime "dev.architectury:architectury-neoforge:${architectury_version}"
