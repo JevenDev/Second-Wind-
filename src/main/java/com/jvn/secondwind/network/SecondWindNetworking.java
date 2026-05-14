@@ -1,14 +1,13 @@
 package com.jvn.secondwind.network;
 
+import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.state.FailureReason;
 import com.jvn.secondwind.state.SecondWindPlayerState;
 import com.jvn.secondwind.state.SecondWindService;
+import com.jvn.toucanlib.neoforge.network.ToucanNetwork;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 public final class SecondWindNetworking {
     private static final String NETWORK_VERSION = "3";
@@ -17,11 +16,19 @@ public final class SecondWindNetworking {
     }
 
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar(NETWORK_VERSION);
-        registrar.playToServer(ServerboundGiveUpPayload.TYPE, ServerboundGiveUpPayload.STREAM_CODEC, SecondWindNetworking::handleGiveUp);
-        registrar.playToServer(ServerboundReviveHoldPayload.TYPE, ServerboundReviveHoldPayload.STREAM_CODEC, SecondWindNetworking::handleReviveHold);
-        registrar.playToClient(ClientboundSecondWindStatePayload.TYPE, ClientboundSecondWindStatePayload.STREAM_CODEC, SecondWindNetworking::handleClientState);
-        registrar.playToClient(ClientboundTrackedDownedPlayerPayload.TYPE, ClientboundTrackedDownedPlayerPayload.STREAM_CODEC, SecondWindNetworking::handleTrackedPlayerState);
+        ToucanNetwork network = ToucanNetwork.create(SecondWindMod.MOD_ID, NETWORK_VERSION, event);
+        network.playToServer(ServerboundGiveUpPayload.TYPE, ServerboundGiveUpPayload.STREAM_CODEC, SecondWindNetworking::handleGiveUp);
+        network.playToServer(ServerboundReviveHoldPayload.TYPE, ServerboundReviveHoldPayload.STREAM_CODEC, SecondWindNetworking::handleReviveHold);
+        network.safePlayToClient(
+                ClientboundSecondWindStatePayload.TYPE,
+                ClientboundSecondWindStatePayload.STREAM_CODEC,
+                "com.jvn.secondwind.client.ClientSecondWindState",
+                "apply");
+        network.safePlayToClient(
+                ClientboundTrackedDownedPlayerPayload.TYPE,
+                ClientboundTrackedDownedPlayerPayload.STREAM_CODEC,
+                "com.jvn.secondwind.client.ClientTrackedDownedPlayers",
+                "apply");
     }
 
     public static void syncToPlayer(ServerPlayer player) {
@@ -77,42 +84,18 @@ public final class SecondWindNetworking {
     }
 
     private static void handleGiveUp(ServerboundGiveUpPayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
-        if (context.player() instanceof ServerPlayer player && SecondWindService.isDowned(player)) {
-            SecondWindService.failAndKill(player, FailureReason.GIVE_UP);
-        }
+        ToucanNetwork.withServerPlayer(context, player -> {
+            if (SecondWindService.isDowned(player)) {
+                SecondWindService.failAndKill(player, FailureReason.GIVE_UP);
+            }
+        });
     }
 
     private static void handleReviveHold(ServerboundReviveHoldPayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
-        if (!(context.player() instanceof ServerPlayer reviver)) {
-            return;
-        }
-
-        if (reviver.serverLevel().getEntity(payload.targetEntityId()) instanceof ServerPlayer downedPlayer) {
-            SecondWindService.refreshReviveChannel(reviver, downedPlayer);
-        }
-    }
-
-    private static void handleClientState(ClientboundSecondWindStatePayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
-        if (FMLEnvironment.dist != Dist.CLIENT) {
-            return;
-        }
-        try {
-            Class<?> stateClass = Class.forName("com.jvn.secondwind.client.ClientSecondWindState");
-            stateClass.getMethod("apply", ClientboundSecondWindStatePayload.class).invoke(null, payload);
-        } catch (ReflectiveOperationException exception) {
-            throw new IllegalStateException("Unable to apply Second Wind client state", exception);
-        }
-    }
-
-    private static void handleTrackedPlayerState(ClientboundTrackedDownedPlayerPayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
-        if (FMLEnvironment.dist != Dist.CLIENT) {
-            return;
-        }
-        try {
-            Class<?> stateClass = Class.forName("com.jvn.secondwind.client.ClientTrackedDownedPlayers");
-            stateClass.getMethod("apply", ClientboundTrackedDownedPlayerPayload.class).invoke(null, payload);
-        } catch (ReflectiveOperationException exception) {
-            throw new IllegalStateException("Unable to apply tracked Second Wind player state", exception);
-        }
+        ToucanNetwork.withServerPlayer(context, reviver -> {
+            if (reviver.serverLevel().getEntity(payload.targetEntityId()) instanceof ServerPlayer downedPlayer) {
+                SecondWindService.refreshReviveChannel(reviver, downedPlayer);
+            }
+        });
     }
 }
