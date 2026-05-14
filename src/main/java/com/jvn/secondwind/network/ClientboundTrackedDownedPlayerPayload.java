@@ -1,10 +1,10 @@
 package com.jvn.secondwind.network;
 
 import com.jvn.secondwind.SecondWindMod;
+import com.jvn.toucanlib.util.ToucanResourceLocations;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 
 public record ClientboundTrackedDownedPlayerPayload(
         int entityId,
@@ -13,7 +13,7 @@ public record ClientboundTrackedDownedPlayerPayload(
     int maxTicks,
     boolean timerPaused) implements CustomPacketPayload {
     public static final Type<ClientboundTrackedDownedPlayerPayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "tracked_player_state"));
+            new Type<>(ToucanResourceLocations.id(SecondWindMod.MOD_ID, "tracked_player_state"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundTrackedDownedPlayerPayload> STREAM_CODEC =
             StreamCodec.of(ClientboundTrackedDownedPlayerPayload::write, ClientboundTrackedDownedPlayerPayload::read);
 

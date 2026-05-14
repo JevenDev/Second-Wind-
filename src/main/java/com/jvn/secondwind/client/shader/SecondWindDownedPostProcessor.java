@@ -3,6 +3,7 @@ package com.jvn.secondwind.client.shader;
 import com.jvn.secondwind.SecondWindMod;
 import com.google.gson.JsonParseException;
 import com.jvn.secondwind.config.SecondWindConfig;
+import com.jvn.toucanlib.util.ToucanResourceLocations;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.resources.ResourceLocation;
@@ -17,7 +18,7 @@ import java.io.IOException;
 public final class SecondWindDownedPostProcessor {
     public static final SecondWindDownedPostProcessor INSTANCE = new SecondWindDownedPostProcessor();
     private static final ResourceLocation POST_CHAIN_LOCATION =
-            ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "shaders/post/downed_post.json");
+            ToucanResourceLocations.id(SecondWindMod.MOD_ID, "shaders/post/downed_post.json");
 
     private float blend;
     private float urgency;

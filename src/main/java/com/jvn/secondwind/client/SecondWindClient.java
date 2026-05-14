@@ -6,7 +6,7 @@ import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.item.SecondWindItems;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.client.shader.SecondWindPostEffects;
-import com.mojang.blaze3d.platform.InputConstants;
+import com.jvn.toucanlib.input.ToucanKeybinds;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -19,13 +19,13 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
 
 public final class SecondWindClient {
     private static final int GIVE_UP_HOLD_TICKS = 30;
     private static final int REVIVE_OVERLAY_FADE_TICKS = 6;
-    private static KeyMapping giveUpKey;
+    private static final ToucanKeybinds KEYBINDS = ToucanKeybinds.create(SecondWindMod.MOD_ID);
+    private static final KeyMapping GIVE_UP_KEY = KEYBINDS.key("give_up", GLFW.GLFW_KEY_R);
     private static int giveUpHeldTicks;
     private static boolean giveUpSent;
     private static boolean localDownedPoseApplied;
@@ -40,18 +40,9 @@ public final class SecondWindClient {
     }
 
     public static void register(IEventBus modEventBus) {
-        modEventBus.addListener(SecondWindClient::registerKeys);
+        KEYBINDS.register();
         modEventBus.addListener(SecondWindPostEffects::registerReloadListeners);
         modEventBus.addListener(SecondWindHud::registerGuiLayers);
-    }
-
-    private static void registerKeys(RegisterKeyMappingsEvent event) {
-        giveUpKey = new KeyMapping(
-                "key.secondwind.give_up",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_R,
-                "key.categories.secondwind");
-        event.register(giveUpKey);
     }
 
     @EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)
@@ -82,15 +73,10 @@ public final class SecondWindClient {
 
             clearReviveHoldOverlay();
 
-            if (giveUpKey == null) {
-                resetGiveUpHold();
-                return;
-            }
-
             minecraft.player.setSprinting(false);
             minecraft.options.keySprint.setDown(false);
 
-            if (giveUpKey.isDown()) {
+            if (GIVE_UP_KEY.isDown()) {
                 giveUpHeldTicks++;
                 if (giveUpHeldTicks >= GIVE_UP_HOLD_TICKS && !giveUpSent) {
                     SecondWindNetworking.sendGiveUpRequest();
@@ -205,7 +191,7 @@ public final class SecondWindClient {
     }
 
     public static Component giveUpKeyName() {
-        return giveUpKey == null ? Component.literal("R") : giveUpKey.getTranslatedKeyMessage();
+        return GIVE_UP_KEY.getTranslatedKeyMessage();
     }
 
     public static float giveUpHoldSecondsRemaining() {

@@ -3,6 +3,7 @@ package com.jvn.secondwind.client.render;
 import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.client.ClientTrackedDownedPlayers;
 import com.jvn.secondwind.client.hud.SecondWindHud;
+import com.jvn.toucanlib.util.ToucanResourceLocations;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ import org.joml.Matrix4f;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)
 public final class SecondWindPlayerTimers {
-    private static final ResourceLocation SKULL_ICON = ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "icons/skull.png");
+    private static final ResourceLocation SKULL_ICON = ToucanResourceLocations.id(SecondWindMod.MOD_ID, "icons/skull.png");
     private static final float LABEL_SCALE = 0.025F;
     private static final float ICON_SIZE = 10.0F;
     private static final float ICON_GAP = 3.0F;

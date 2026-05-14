@@ -1,10 +1,10 @@
 package com.jvn.secondwind.network;
 
 import com.jvn.secondwind.SecondWindMod;
+import com.jvn.toucanlib.util.ToucanResourceLocations;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 
 public record ClientboundSecondWindStatePayload(
         boolean downed,
@@ -17,7 +17,7 @@ public record ClientboundSecondWindStatePayload(
     boolean showReviveFlash,
     String reviverName) implements CustomPacketPayload {
     public static final Type<ClientboundSecondWindStatePayload> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "state"));
+            new Type<>(ToucanResourceLocations.id(SecondWindMod.MOD_ID, "state"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundSecondWindStatePayload> STREAM_CODEC =
             StreamCodec.of(ClientboundSecondWindStatePayload::write, ClientboundSecondWindStatePayload::read);
 

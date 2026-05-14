@@ -1,6 +1,7 @@
 package com.jvn.secondwind;
 
 import com.jvn.secondwind.advancement.SecondWindCriteria;
+import com.jvn.toucanlib.client.ToucanClientOnly;
 import com.mojang.logging.LogUtils;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.item.SecondWindItems;
@@ -10,7 +11,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.loading.FMLEnvironment;
 import org.slf4j.Logger;
 
 @Mod(SecondWindMod.MOD_ID)
@@ -24,9 +24,9 @@ public final class SecondWindMod {
         SecondWindItems.register(modEventBus);
         modEventBus.addListener(SecondWindNetworking::registerPayloads);
         modContainer.registerConfig(ModConfig.Type.COMMON, SecondWindConfig.SPEC);
-        if (FMLEnvironment.dist.isClient()) {
+        ToucanClientOnly.run(() -> {
             com.jvn.secondwind.client.SecondWindClient.register(modEventBus);
             com.jvn.secondwind.client.SecondWindConfigScreens.register(modContainer);
-        }
+        });
     }
 }

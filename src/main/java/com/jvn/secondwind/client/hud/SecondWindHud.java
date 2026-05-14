@@ -3,6 +3,9 @@ package com.jvn.secondwind.client.hud;
 import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.client.ClientSecondWindState;
 import com.jvn.secondwind.client.SecondWindClient;
+import com.jvn.toucanlib.client.ToucanColors;
+import com.jvn.toucanlib.client.ToucanHudText;
+import com.jvn.toucanlib.util.ToucanResourceLocations;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -21,16 +24,16 @@ import java.util.Locale;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID, value = Dist.CLIENT)
 public final class SecondWindHud {
-    private static final ResourceLocation LAST_STAND_LAYER = ResourceLocation.fromNamespaceAndPath(
+    private static final ResourceLocation LAST_STAND_LAYER = ToucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "last_stand_layer");
-    private static final ResourceLocation LAST_STAND_BAR_BASE = ResourceLocation.fromNamespaceAndPath(
+    private static final ResourceLocation LAST_STAND_BAR_BASE = ToucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_bar_base.png");
-    private static final ResourceLocation LAST_STAND_BAR_FILL = ResourceLocation.fromNamespaceAndPath(
+    private static final ResourceLocation LAST_STAND_BAR_FILL = ToucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_bar_fill.png");
-    private static final ResourceLocation LAST_STAND_OVERLAY = ResourceLocation.fromNamespaceAndPath(
+    private static final ResourceLocation LAST_STAND_OVERLAY = ToucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_overlay.png");
     private static final int LAST_STAND_WIDTH = 168;
@@ -167,8 +170,8 @@ public final class SecondWindHud {
         }
 
         float alpha = ClientSecondWindState.reviveOverlayAlpha();
-        int textColor = applyAlpha(REVIVE_TEXT_COLOR, alpha);
-        int outlineColor = applyAlpha(TIMER_OUTLINE_COLOR, alpha);
+        int textColor = ToucanColors.withAlpha(REVIVE_TEXT_COLOR, alpha);
+        int outlineColor = ToucanColors.withAlpha(TIMER_OUTLINE_COLOR, alpha);
         int progressPercent = Math.round(ClientSecondWindState.displayedReviveProgress() * 100.0F);
         String reviverName = ClientSecondWindState.displayedReviverName();
         String statusText = reviverName == null || reviverName.isBlank()
@@ -192,8 +195,8 @@ public final class SecondWindHud {
         }
 
         float alpha = SecondWindClient.reviveOverlayAlpha();
-        int textColor = applyAlpha(REVIVE_TEXT_COLOR, alpha);
-        int outlineColor = applyAlpha(TIMER_OUTLINE_COLOR, alpha);
+        int textColor = ToucanColors.withAlpha(REVIVE_TEXT_COLOR, alpha);
+        int outlineColor = ToucanColors.withAlpha(TIMER_OUTLINE_COLOR, alpha);
         int progressPercent = Math.round(SecondWindClient.reviveProgress() * 100.0F);
         String targetName = SecondWindClient.reviveTargetName();
         String statusText = targetName == null || targetName.isBlank()
@@ -211,11 +214,6 @@ public final class SecondWindHud {
         return true;
     }
 
-    private static int applyAlpha(int color, float alpha) {
-        int alphaChannel = Mth.clamp(Math.round(alpha * 255.0F), 0, 255);
-        return alphaChannel << 24 | color & 0x00FFFFFF;
-    }
-
     private static void drawOutlinedCenteredString(
             GuiGraphics graphics,
             Font font,
@@ -226,11 +224,7 @@ public final class SecondWindHud {
             int outlineColor) {
         int textX = centerX - font.width(text) / 2;
         int textY = centerY - font.lineHeight / 2;
-        graphics.drawString(font, text, textX - 1, textY, outlineColor, false);
-        graphics.drawString(font, text, textX + 1, textY, outlineColor, false);
-        graphics.drawString(font, text, textX, textY - 1, outlineColor, false);
-        graphics.drawString(font, text, textX, textY + 1, outlineColor, false);
-        graphics.drawString(font, text, textX, textY, color, false);
+        ToucanHudText.drawOutlinedString(graphics, font, text, textX, textY, color, outlineColor);
     }
 
     private static void renderGiveUpCountdown(GuiGraphics graphics, Font font, int centerX, int centerY) {
