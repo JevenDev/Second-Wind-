@@ -2,7 +2,6 @@ package com.jvn.secondwind;
 
 import com.jvn.secondwind.advancement.SecondWindCriteria;
 import com.jvn.toucanlib.client.ToucanClientOnly;
-import com.mojang.logging.LogUtils;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.item.SecondWindItems;
 import com.jvn.secondwind.network.SecondWindNetworking;
@@ -15,10 +14,11 @@ import org.slf4j.Logger;
 
 @Mod(SecondWindMod.MOD_ID)
 public final class SecondWindMod {
-    public static final String MOD_ID = "secondwind";
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final String MOD_ID = SecondWindCommon.MOD_ID;
+    public static final Logger LOGGER = SecondWindCommon.LOGGER;
 
     public SecondWindMod(IEventBus modEventBus, ModContainer modContainer) {
+        SecondWindCommon.init();
         SecondWindCriteria.TRIGGER_TYPES.register(modEventBus);
         SecondWindData.ATTACHMENT_TYPES.register(modEventBus);
         SecondWindItems.register(modEventBus);
