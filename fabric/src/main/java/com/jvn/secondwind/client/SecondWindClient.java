@@ -37,7 +37,7 @@ public final class SecondWindClient implements ClientModInitializer {
     private static String reviveDisplayTargetName = "";
     private static int reviveFadeTicks;
 
-    private SecondWindClient() {
+    public SecondWindClient() {
     }
 
     @Override
