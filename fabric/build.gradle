@@ -28,6 +28,10 @@ dependencies {
     modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
     modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
 
+    if (rootProject.enable_toucanlib.toBoolean()) {
+        modImplementation "curse.maven:toucanlib-${rootProject.toucanlib_curse_project_id}:${rootProject.toucanlib_curse_file_id}"
+    }
+
     common(project(path: ':common', configuration: 'namedElements')) {
         transitive = false
     }

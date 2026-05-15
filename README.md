@@ -1,13 +1,13 @@
 # Second Wind!
 
-Second Wind! is a NeoForge Minecraft mod that gives players a second-chance downed state with revive, last-stand, and recovery mechanics.
+Second Wind! is a Minecraft mod that gives players a second-chance downed state with revive, last-stand, and recovery mechanics.
 
 ## Supported Versions
 
 - Minecraft: `1.21.1`
 - Java: `21`
 - NeoForge: active and buildable
-- Fabric: scaffolded module only; gameplay is not implemented on Fabric yet
+- Fabric: active port and buildable
 
 ## Building
 
@@ -42,10 +42,10 @@ For advanced local ToucanLib development, `-PuseLocalToucanLib=true` enables `ma
 - Package: `com.jvn.secondwind`
 - Mod ID: `secondwind`
 - Common resources are in `common/`.
-- Active NeoForge gameplay code is in `neoforge/`.
-- Fabric exists only as a clean skeleton until a future gameplay port.
+- NeoForge gameplay code is in `neoforge/`.
+- Fabric gameplay code is in `fabric/`.
 
 ## TODO
 
-- Port gameplay to Fabric when Fabric support is ready.
+- Give the Fabric port more in-game shakedown testing before release.
 - Keep ToucanLib on published Maven coordinates for CI and releases.
