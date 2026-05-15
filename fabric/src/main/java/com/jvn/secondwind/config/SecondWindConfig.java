@@ -46,7 +46,7 @@ public final class SecondWindConfig {
     }
 
     public static void load() {
-        Path path = FabricLoader.getInstance().getConfigDir().resolve("secondwind.json");
+        Path path = configPath();
         if (Files.exists(path)) {
             try (Reader reader = Files.newBufferedReader(path)) {
                 JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
@@ -61,6 +61,49 @@ public final class SecondWindConfig {
         } catch (IOException exception) {
             SecondWindMod.LOGGER.warn("Failed to write Fabric config defaults to {}.", path, exception);
         }
+    }
+
+    public static void save() {
+        try {
+            write(configPath());
+        } catch (IOException exception) {
+            SecondWindMod.LOGGER.warn("Failed to save Fabric config.", exception);
+        }
+    }
+
+    public static void resetDefaults() {
+        DOWNED_TIMER_SECONDS.reset();
+        MINIMUM_DOWNED_TIMER_SECONDS.reset();
+        TIMER_PENALTY_PER_DOWN.reset();
+        DOWNED_SLOWNESS_LEVEL.reset();
+        DOWNED_DAMAGE_REDUCES_TIMER.reset();
+        DOWNED_DAMAGE_COOLDOWN_TICKS.reset();
+        DOWNED_DAMAGE_REGISTERS.reset();
+        BLOCK_HEALING_WHILE_DOWNED.reset();
+        BLOCK_EATING_WHILE_DOWNED.reset();
+        REVIVE_HEALTH_HALF_HEARTS.reset();
+        REVIVE_REGENERATION_SECONDS.reset();
+        POST_REVIVE_INVULNERABILITY_SECONDS.reset();
+        COOLDOWN_MODE.reset();
+        COOLDOWN_DURATION_SECONDS.reset();
+        RESET_COOLDOWN_ON_DEATH.reset();
+        MULTIPLAYER_REVIVE.reset();
+        REVIVE_CHANNEL_SECONDS.reset();
+        REVIVE_DISTANCE.reset();
+        REVIVE_INTERRUPT_ON_DAMAGE.reset();
+        ALLOW_PASSIVE_KILLS.reset();
+        ALLOW_PLAYER_KILLS.reset();
+        ALLOW_PET_KILLS.reset();
+        ALLOW_VOID_SECOND_WIND.reset();
+        ENABLE_DOWNED_VIGNETTE.reset();
+        ENABLE_DESATURATION.reset();
+        ENABLE_DOWNED_BLOOM.reset();
+        ENABLE_SOUNDS.reset();
+        save();
+    }
+
+    private static Path configPath() {
+        return FabricLoader.getInstance().getConfigDir().resolve("secondwind.json");
     }
 
     private static void apply(JsonObject root) {
@@ -129,14 +172,24 @@ public final class SecondWindConfig {
     }
 
     public static final class IntValue {
+        private final int defaultValue;
         private int value;
 
         private IntValue(int value) {
+            this.defaultValue = value;
             this.value = value;
         }
 
         public Integer get() {
             return value;
+        }
+
+        public void set(int value) {
+            this.value = value;
+        }
+
+        private void reset() {
+            value = defaultValue;
         }
 
         private void read(JsonObject root, String key) {
@@ -151,14 +204,24 @@ public final class SecondWindConfig {
     }
 
     public static final class DoubleValue {
+        private final double defaultValue;
         private double value;
 
         private DoubleValue(double value) {
+            this.defaultValue = value;
             this.value = value;
         }
 
         public Double get() {
             return value;
+        }
+
+        public void set(double value) {
+            this.value = value;
+        }
+
+        private void reset() {
+            value = defaultValue;
         }
 
         private void read(JsonObject root, String key) {
@@ -173,14 +236,28 @@ public final class SecondWindConfig {
     }
 
     public static final class BooleanValue {
+        private final boolean defaultValue;
         private boolean value;
 
         private BooleanValue(boolean value) {
+            this.defaultValue = value;
             this.value = value;
         }
 
         public Boolean get() {
             return value;
+        }
+
+        public void set(boolean value) {
+            this.value = value;
+        }
+
+        public void toggle() {
+            value = !value;
+        }
+
+        private void reset() {
+            value = defaultValue;
         }
 
         private void read(JsonObject root, String key) {
@@ -195,14 +272,29 @@ public final class SecondWindConfig {
     }
 
     public static final class EnumValue<T extends Enum<T>> {
+        private final T defaultValue;
         private T value;
 
         private EnumValue(T value) {
+            this.defaultValue = value;
             this.value = value;
         }
 
         public T get() {
             return value;
+        }
+
+        public void set(T value) {
+            this.value = value;
+        }
+
+        public void next() {
+            T[] values = value.getDeclaringClass().getEnumConstants();
+            value = values[(value.ordinal() + 1) % values.length];
+        }
+
+        private void reset() {
+            value = defaultValue;
         }
 
         private void read(JsonObject root, String key) {

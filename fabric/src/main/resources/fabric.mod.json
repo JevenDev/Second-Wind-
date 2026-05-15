@@ -20,6 +20,9 @@
     ],
     "client": [
       "${mod_package}.client.SecondWindClient"
+    ],
+    "modmenu": [
+      "${mod_package}.client.config.SecondWindModMenu"
     ]
   },
   "depends": {
@@ -28,5 +31,8 @@
     "minecraft": "${minecraft_version}",
     "architectury": ">=${architectury_version}",
     "toucanlib": ">=${toucanlib_version}"
+  },
+  "suggests": {
+    "modmenu": ">=${modmenu_version}"
   }
 }
