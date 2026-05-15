@@ -1,4 +1,4 @@
-package com.jvn.secondwind;
+package com.jvn.secondwind.common;
 
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;

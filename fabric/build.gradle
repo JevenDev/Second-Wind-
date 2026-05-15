@@ -23,6 +23,10 @@ configurations {
     developmentFabric.extendsFrom common
 }
 
+sourceSets.main.resources {
+    srcDir project(':common').file('src/main/resources')
+}
+
 dependencies {
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     modApi "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
@@ -79,6 +83,7 @@ tasks.named('remapJar').configure {
 }
 
 tasks.named('sourcesJar', Jar).configure {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     def commonSources = project(':common').tasks.named('sourcesJar', Jar)
     dependsOn commonSources
     from commonSources.map { zipTree(it.archiveFile.get().asFile) }

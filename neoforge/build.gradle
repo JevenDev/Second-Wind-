@@ -23,6 +23,10 @@ configurations {
     developmentNeoForge.extendsFrom common
 }
 
+sourceSets.main.resources {
+    srcDir project(':common').file('src/main/resources')
+}
+
 dependencies {
     neoForge "net.neoforged:neoforge:${rootProject.neo_version}"
     modApi "dev.architectury:architectury-neoforge:${rootProject.architectury_version}"
@@ -84,6 +88,7 @@ tasks.named('remapJar').configure {
 }
 
 tasks.named('sourcesJar', Jar).configure {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     def commonSources = project(':common').tasks.named('sourcesJar', Jar)
     dependsOn commonSources
     from commonSources.map { zipTree(it.archiveFile.get().asFile) }

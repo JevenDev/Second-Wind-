@@ -1,6 +1,7 @@
 package com.jvn.secondwind;
 
 import com.jvn.secondwind.advancement.SecondWindCriteria;
+import com.jvn.secondwind.common.SecondWindCommon;
 import com.jvn.toucanlib.client.ToucanClientOnly;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.item.SecondWindItems;

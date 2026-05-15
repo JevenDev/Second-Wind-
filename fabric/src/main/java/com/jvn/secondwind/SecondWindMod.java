@@ -1,6 +1,7 @@
 package com.jvn.secondwind;
 
 import com.jvn.secondwind.advancement.SecondWindCriteria;
+import com.jvn.secondwind.common.SecondWindCommon;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.event.SecondWindCommands;
 import com.jvn.secondwind.event.SecondWindServerEvents;
