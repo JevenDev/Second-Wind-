@@ -15,7 +15,7 @@ public final class SecondWindReviveFlashEffect {
     public static final int DURATION_TICKS = 56;
 
     private static final int VANILLA_ACTIVATION_TICKS = 40;
-    private static final Component TITLE = Component.literal("SECOND WIND");
+    private static final Component TITLE = Component.translatable("hud.secondwind.second_wind");
     private static final float TARGET_Y_FRACTION = 0.24F;
     private static final int TITLE_COLOR = 0xFFFFF3C9;
     private static final int TITLE_SHADOW_COLOR = 0xCC140C08;

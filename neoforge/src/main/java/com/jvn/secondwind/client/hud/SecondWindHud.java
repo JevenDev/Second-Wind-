@@ -3,6 +3,7 @@ package com.jvn.secondwind.client.hud;
 import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.client.ClientSecondWindState;
 import com.jvn.secondwind.client.SecondWindClient;
+import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.toucanlib.client.ToucanColors;
 import com.jvn.toucanlib.client.ToucanHudText;
 import com.jvn.toucanlib.neoforge.client.ToucanGuiLayers;
@@ -79,6 +80,10 @@ public final class SecondWindHud {
             return;
         }
 
+        if (SecondWindConfig.USE_SIMPLE_DOWNED_TIMER.get()) {
+            return;
+        }
+
         int width = minecraft.getWindow().getGuiScaledWidth();
         int height = minecraft.getWindow().getGuiScaledHeight();
         int x = width / 2 - LAST_STAND_WIDTH / 2;
@@ -100,6 +105,7 @@ public final class SecondWindHud {
         boolean reviveOverlayVisible = renderReviveStatus(graphics, font, centerX, centerY);
 
         if (ClientSecondWindState.isDowned()) {
+            renderSimpleDownedTimer(graphics, font, centerX, centerY, reviveOverlayVisible);
             int giveUpTimerY = centerY + (reviveOverlayVisible ? CROSSHAIR_SECONDARY_TIMER_OFFSET_Y : CROSSHAIR_PRIMARY_TIMER_OFFSET_Y);
             renderGiveUpCountdown(graphics, font, centerX, giveUpTimerY);
         }
@@ -159,6 +165,24 @@ public final class SecondWindHud {
         return displayedTicksRemaining <= LAST_STAND_TIMER_RED_TICKS ? 0xFFFF4040 : 0xFFFFFFFF;
     }
 
+    private static boolean renderSimpleDownedTimer(GuiGraphics graphics, Font font, int centerX, int centerY, boolean reviveOverlayVisible) {
+        if (!SecondWindConfig.USE_SIMPLE_DOWNED_TIMER.get()) {
+            return false;
+        }
+
+        float displayedTicksRemaining = ClientSecondWindState.displayedTicksRemaining();
+        int timerY = centerY + (reviveOverlayVisible ? CROSSHAIR_PRIMARY_TIMER_OFFSET_Y : CROSSHAIR_LABEL_OFFSET_Y);
+        drawOutlinedCenteredString(
+                graphics,
+                font,
+                formatTimerLabel(displayedTicksRemaining),
+                centerX,
+                timerY,
+                timerTextColor(displayedTicksRemaining),
+                TIMER_OUTLINE_COLOR);
+        return true;
+    }
+
     private static boolean renderReviveStatus(GuiGraphics graphics, Font font, int centerX, int centerY) {
         if (ClientSecondWindState.isDowned()) {
             return renderDownedReviveStatus(graphics, font, centerX, centerY);
@@ -178,8 +202,8 @@ public final class SecondWindHud {
         int progressPercent = Math.round(ClientSecondWindState.displayedReviveProgress() * 100.0F);
         String reviverName = ClientSecondWindState.displayedReviverName();
         String statusText = reviverName == null || reviverName.isBlank()
-                ? "Being revived " + progressPercent + "%"
-                : "Being revived by " + reviverName + " " + progressPercent + "%";
+                ? Component.translatable("hud.secondwind.being_revived", progressPercent).getString()
+                : Component.translatable("hud.secondwind.being_revived_by", reviverName, progressPercent).getString();
 
         drawOutlinedCenteredString(
                 graphics,
@@ -203,8 +227,8 @@ public final class SecondWindHud {
         int progressPercent = Math.round(SecondWindClient.reviveProgress() * 100.0F);
         String targetName = SecondWindClient.reviveTargetName();
         String statusText = targetName == null || targetName.isBlank()
-                ? "Reviving " + progressPercent + "%"
-                : "Reviving " + targetName + " " + progressPercent + "%";
+                ? Component.translatable("hud.secondwind.reviving", progressPercent).getString()
+                : Component.translatable("hud.secondwind.reviving_target", targetName, progressPercent).getString();
 
         drawOutlinedCenteredString(
                 graphics,

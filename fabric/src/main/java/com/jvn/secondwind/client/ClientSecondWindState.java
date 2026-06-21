@@ -40,10 +40,12 @@ public final class ClientSecondWindState {
         float currentDisplayedReviveProgress = displayedReviveProgress();
         boolean hadReviveOverlay = hasReviveOverlay();
         downed = payload.downed();
-        if (payload.showReviveFlash()) {
+        if (payload.showReviveFlash() && SecondWindConfig.ENABLE_SECOND_WIND_POPUP.get()) {
             revivedFlashTicks = SecondWindReviveFlashEffect.DURATION_TICKS;
             SecondWindReviveFlashEffect.beginActivation();
             SecondWindClient.playReviveItemActivation();
+        } else if (!SecondWindConfig.ENABLE_SECOND_WIND_POPUP.get()) {
+            revivedFlashTicks = 0;
         }
         ticksRemaining = payload.ticksRemaining();
         maxTicks = payload.maxTicks();

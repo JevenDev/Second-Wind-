@@ -1,139 +1,248 @@
 package com.jvn.secondwind.config;
 
-import net.neoforged.neoforge.common.ModConfigSpec;
+import com.jvn.secondwind.SecondWindMod;
+import io.wispforest.owo.config.ConfigWrapper;
+import io.wispforest.owo.config.Option;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public final class SecondWindConfig {
-    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+    public static final ConfigWrapper<?> CONFIG = loadConfig();
 
-    public static final ModConfigSpec.IntValue DOWNED_TIMER_SECONDS;
-    public static final ModConfigSpec.IntValue MINIMUM_DOWNED_TIMER_SECONDS;
-    public static final ModConfigSpec.IntValue TIMER_PENALTY_PER_DOWN;
-    public static final ModConfigSpec.IntValue DOWNED_SLOWNESS_LEVEL;
-    public static final ModConfigSpec.BooleanValue DOWNED_DAMAGE_REDUCES_TIMER;
-    public static final ModConfigSpec.IntValue DOWNED_DAMAGE_COOLDOWN_TICKS;
-    public static final ModConfigSpec.BooleanValue DOWNED_DAMAGE_REGISTERS;
-    public static final ModConfigSpec.BooleanValue BLOCK_HEALING_WHILE_DOWNED;
-    public static final ModConfigSpec.BooleanValue BLOCK_EATING_WHILE_DOWNED;
-    public static final ModConfigSpec.IntValue REVIVE_HEALTH_HALF_HEARTS;
-    public static final ModConfigSpec.IntValue REVIVE_REGENERATION_SECONDS;
-    public static final ModConfigSpec.IntValue POST_REVIVE_INVULNERABILITY_SECONDS;
-    public static final ModConfigSpec.EnumValue<CooldownMode> COOLDOWN_MODE;
-    public static final ModConfigSpec.IntValue COOLDOWN_DURATION_SECONDS;
-    public static final ModConfigSpec.BooleanValue RESET_COOLDOWN_ON_DEATH;
-    public static final ModConfigSpec.BooleanValue MULTIPLAYER_REVIVE;
-    public static final ModConfigSpec.DoubleValue REVIVE_CHANNEL_SECONDS;
-    public static final ModConfigSpec.DoubleValue REVIVE_DISTANCE;
-    public static final ModConfigSpec.BooleanValue REVIVE_INTERRUPT_ON_DAMAGE;
-    public static final ModConfigSpec.BooleanValue ALLOW_PASSIVE_KILLS;
-    public static final ModConfigSpec.BooleanValue ALLOW_PLAYER_KILLS;
-    public static final ModConfigSpec.BooleanValue ALLOW_PET_KILLS;
-    public static final ModConfigSpec.BooleanValue ALLOW_VOID_SECOND_WIND;
-    public static final ModConfigSpec.BooleanValue ENABLE_DOWNED_VIGNETTE;
-    public static final ModConfigSpec.BooleanValue ENABLE_DESATURATION;
-    public static final ModConfigSpec.BooleanValue ENABLE_DOWNED_BLOOM;
-    public static final ModConfigSpec.BooleanValue ENABLE_SOUNDS;
-
-    public static final ModConfigSpec SPEC;
-
-    static {
-        BUILDER.push("secondWind");
-
-        DOWNED_TIMER_SECONDS = BUILDER
-                .comment("Base number of seconds a player remains downed before dying.")
-                .defineInRange("downedTimerSeconds", 12, 3, 60);
-        MINIMUM_DOWNED_TIMER_SECONDS = BUILDER
-                .comment("Minimum downed timer after repeated-down penalties are applied.")
-                .defineInRange("minimumDownedTimerSeconds", 3, 1, 30);
-        TIMER_PENALTY_PER_DOWN = BUILDER
-                .comment("Seconds removed from the downed timer for each current penalty count.")
-                .defineInRange("timerPenaltyPerDown", 2, 0, 10);
-        DOWNED_SLOWNESS_LEVEL = BUILDER
-                .comment("Vanilla Slowness level applied while downed. 0 disables it, 3 is Slowness III.")
-                .defineInRange("downedSlownessLevel", 3, 0, 6);
-        DOWNED_DAMAGE_REDUCES_TIMER = BUILDER
-                .comment("When a downed player is hit, reduce their remaining downed timer based on the incoming damage amount.")
-                .define("downedDamageReducesTimer", true);
-        DOWNED_DAMAGE_COOLDOWN_TICKS = BUILDER
-                .comment("Minimum number of ticks between hits that can reduce a downed player's timer.")
-                .defineInRange("downedDamageCooldownTicks", 30, 0, 100);
-        DOWNED_DAMAGE_REGISTERS = BUILDER
-                .comment("Allow hits against downed players to continue applying normal Minecraft damage in addition to any timer reduction.")
-                .define("downedDamageRegisters", false);
-        BLOCK_HEALING_WHILE_DOWNED = BUILDER
-                .comment("Prevent healing from restoring health while the player is downed.")
-                .define("blockHealingWhileDowned", true);
-        BLOCK_EATING_WHILE_DOWNED = BUILDER
-                .comment("Prevent downed players from eating food items until they are revived or die.")
-                .define("blockEatingWhileDowned", true);
-        REVIVE_HEALTH_HALF_HEARTS = BUILDER
-                .comment("Health restored on revive, measured in half-hearts.")
-                .defineInRange("reviveHealthHalfHearts", 12, 1, 40);
-        REVIVE_REGENERATION_SECONDS = BUILDER
-                .comment("Seconds of Regeneration II granted after revive.")
-                .defineInRange("reviveRegenerationSeconds", 3, 0, 30);
-        POST_REVIVE_INVULNERABILITY_SECONDS = BUILDER
-                .comment("Seconds of brief invulnerability granted after revive.")
-                .defineInRange("postReviveInvulnerabilitySeconds", 2, 0, 10);
-
-        COOLDOWN_MODE = BUILDER
-                .comment("How Second Wind cooldown is tracked.")
-                .defineEnum("cooldownMode", CooldownMode.TIMED);
-        COOLDOWN_DURATION_SECONDS = BUILDER
-                .comment("Timed cooldown duration in seconds when cooldownMode is TIMED.")
-                .defineInRange("cooldownDurationSeconds", 300, 0, 86400);
-        RESET_COOLDOWN_ON_DEATH = BUILDER
-                .comment("Reset Second Wind cooldown and repeated-down penalty when the player dies and respawns.")
-                .define("resetCooldownOnDeath", true);
-
-        BUILDER.push("multiplayerRevive");
-        MULTIPLAYER_REVIVE = BUILDER
-                .comment("Allow another player to revive a downed player.")
-                .define("multiplayerRevive", true);
-        REVIVE_CHANNEL_SECONDS = BUILDER
-                .comment("Seconds another player must channel interaction to revive a downed player.")
-                .defineInRange("reviveChannelSeconds", 2.0D, 0.0D, 10.0D);
-        REVIVE_DISTANCE = BUILDER
-                .comment("Maximum distance between reviver and downed player during revive channel.")
-                .defineInRange("reviveDistance", 2.5D, 1.0D, 8.0D);
-        REVIVE_INTERRUPT_ON_DAMAGE = BUILDER
-                .comment("Interrupt multiplayer revive channels when the reviver or downed player takes damage.")
-                .define("reviveInterruptOnDamage", true);
-        BUILDER.pop();
-
-        BUILDER.push("killRules");
-        ALLOW_PASSIVE_KILLS = BUILDER
-                .comment("Allow passive mob kills to revive a downed player.")
-                .define("allowPassiveKills", false);
-        ALLOW_PLAYER_KILLS = BUILDER
-                .comment("Allow player kills to revive a downed player.")
-                .define("allowPlayerKills", true);
-        ALLOW_PET_KILLS = BUILDER
-                .comment("Allow owned pet kills to count for their downed owner.")
-                .define("allowPetKills", false);
-        ALLOW_VOID_SECOND_WIND = BUILDER
-                .comment("Allow Second Wind to trigger from void or out-of-world damage.")
-                .define("allowVoidSecondWind", false);
-        BUILDER.pop();
-
-        BUILDER.push("clientFeedback");
-        ENABLE_DOWNED_VIGNETTE = BUILDER
-                .comment("Show a dark vignette while downed.")
-                .define("enableDownedVignette", true);
-        ENABLE_DESATURATION = BUILDER
-                .comment("Show a desaturated red screen tint while downed when supported.")
-                .define("enableDesaturation", true);
-        ENABLE_DOWNED_BLOOM = BUILDER
-                .comment("Apply a soft bloom-style blur while downed when supported.")
-                .define("enableDownedBloom", true);
-        ENABLE_SOUNDS = BUILDER
-                .comment("Play Second Wind sounds when available.")
-                .define("enableSounds", true);
-        BUILDER.pop();
-
-        BUILDER.pop();
-        SPEC = BUILDER.build();
-    }
+    public static final ConfigValue<Integer> DOWNED_TIMER_SECONDS = bind("secondWind.downedTimerSeconds", Integer.class);
+    public static final ConfigValue<Integer> MINIMUM_DOWNED_TIMER_SECONDS = bind("secondWind.minimumDownedTimerSeconds", Integer.class);
+    public static final ConfigValue<Integer> TIMER_PENALTY_PER_DOWN = bind("secondWind.timerPenaltyPerDown", Integer.class);
+    public static final ConfigValue<Integer> DOWNED_SLOWNESS_LEVEL = bind("secondWind.downedSlownessLevel", Integer.class);
+    public static final ConfigValue<Boolean> DOWNED_DAMAGE_REDUCES_TIMER = bind("secondWind.downedDamageReducesTimer", Boolean.class);
+    public static final ConfigValue<Integer> DOWNED_DAMAGE_COOLDOWN_TICKS = bind("secondWind.downedDamageCooldownTicks", Integer.class);
+    public static final ConfigValue<Boolean> DOWNED_DAMAGE_REGISTERS = bind("secondWind.downedDamageRegisters", Boolean.class);
+    public static final ConfigValue<Boolean> BLOCK_HEALING_WHILE_DOWNED = bind("secondWind.blockHealingWhileDowned", Boolean.class);
+    public static final ConfigValue<Boolean> BLOCK_EATING_WHILE_DOWNED = bind("secondWind.blockEatingWhileDowned", Boolean.class);
+    public static final ConfigValue<Integer> REVIVE_HEALTH_HALF_HEARTS = bind("secondWind.reviveHealthHalfHearts", Integer.class);
+    public static final ConfigValue<Integer> REVIVE_REGENERATION_SECONDS = bind("secondWind.reviveRegenerationSeconds", Integer.class);
+    public static final ConfigValue<Integer> POST_REVIVE_INVULNERABILITY_SECONDS = bind("secondWind.postReviveInvulnerabilitySeconds", Integer.class);
+    public static final ConfigValue<CooldownMode> COOLDOWN_MODE = bind("secondWind.cooldownMode", CooldownMode.class);
+    public static final ConfigValue<Integer> COOLDOWN_DURATION_SECONDS = bind("secondWind.cooldownDurationSeconds", Integer.class);
+    public static final ConfigValue<Boolean> RESET_COOLDOWN_ON_DEATH = bind("secondWind.resetCooldownOnDeath", Boolean.class);
+    public static final ConfigValue<Boolean> MULTIPLAYER_REVIVE = bind("multiplayerRevive.multiplayerRevive", Boolean.class);
+    public static final ConfigValue<Double> REVIVE_CHANNEL_SECONDS = bind("multiplayerRevive.reviveChannelSeconds", Double.class);
+    public static final ConfigValue<Double> REVIVE_DISTANCE = bind("multiplayerRevive.reviveDistance", Double.class);
+    public static final ConfigValue<Boolean> REVIVE_INTERRUPT_ON_DAMAGE = bind("multiplayerRevive.reviveInterruptOnDamage", Boolean.class);
+    public static final ConfigValue<Boolean> ALLOW_PASSIVE_KILLS = bind("killRules.allowPassiveKills", Boolean.class);
+    public static final ConfigValue<Boolean> ALLOW_PLAYER_KILLS = bind("killRules.allowPlayerKills", Boolean.class);
+    public static final ConfigValue<Boolean> ALLOW_PET_KILLS = bind("killRules.allowPetKills", Boolean.class);
+    public static final ConfigValue<Boolean> ALLOW_VOID_SECOND_WIND = bind("killRules.allowVoidSecondWind", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_DOWNED_VIGNETTE = bind("clientFeedback.enableDownedVignette", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_DESATURATION = bind("clientFeedback.enableDesaturation", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_DOWNED_BLOOM = bind("clientFeedback.enableDownedBloom", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_SOUNDS = bind("clientFeedback.enableSounds", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_CHAT_MESSAGES = bind("clientFeedback.enableChatMessages", Boolean.class);
+    public static final ConfigValue<Boolean> LOCALIZE_CHAT_MESSAGES = bind("clientFeedback.localizeChatMessages", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_SECOND_WIND_POPUP = bind("clientFeedback.enableSecondWindPopup", Boolean.class);
+    public static final ConfigValue<Boolean> USE_SIMPLE_DOWNED_TIMER = bind("clientFeedback.useSimpleDownedTimer", Boolean.class);
 
     private SecondWindConfig() {
+    }
+
+    public static void init() {
+    }
+
+    public static void load() {
+        CONFIG.load();
+    }
+
+    public static void save() {
+        CONFIG.save();
+    }
+
+    public static void resetDefaults() {
+        CONFIG.allOptions().values().forEach(SecondWindConfig::resetOption);
+        CONFIG.save();
+    }
+
+    private static ConfigWrapper<?> loadConfig() {
+        ConfigWrapper<?> config = instantiateConfigWrapper();
+        if (!migrateLegacyTomlIfNeeded(config)) {
+            config.load();
+        }
+        return config;
+    }
+
+    private static ConfigWrapper<?> instantiateConfigWrapper() {
+        try {
+            Class<?> wrapperClass = Class.forName("com.jvn.secondwind.config.SecondWindOwoConfig");
+            var constructor = wrapperClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return (ConfigWrapper<?>) constructor.newInstance();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+                 | NoSuchMethodException | InvocationTargetException exception) {
+            throw new IllegalStateException("Failed to initialize generated owo config wrapper", exception);
+        }
+    }
+
+    private static boolean migrateLegacyTomlIfNeeded(ConfigWrapper<?> config) {
+        if (Files.exists(config.fileLocation())) {
+            return false;
+        }
+
+        Path legacyPath = config.fileLocation().getParent().resolve("secondwind-common.toml");
+        if (!Files.exists(legacyPath)) {
+            return false;
+        }
+
+        boolean migrated = migrateLegacyToml(config, legacyPath);
+        if (migrated) {
+            config.save();
+        }
+        return migrated;
+    }
+
+    private static boolean migrateLegacyToml(ConfigWrapper<?> config, Path path) {
+        boolean migratedAny = false;
+        String currentSection = null;
+
+        try {
+            for (String rawLine : Files.readAllLines(path)) {
+                String line = stripTomlComment(rawLine).trim();
+                if (line.isEmpty()) {
+                    continue;
+                }
+
+                if (line.startsWith("[") && line.endsWith("]")) {
+                    currentSection = line.substring(1, line.length() - 1).trim().replace("\"", "");
+                    continue;
+                }
+
+                if (currentSection == null) {
+                    continue;
+                }
+
+                int separator = line.indexOf('=');
+                if (separator < 0) {
+                    continue;
+                }
+
+                String key = mapLegacyTomlKey(currentSection + "." + line.substring(0, separator).trim());
+                String value = line.substring(separator + 1).trim();
+                migratedAny |= applyLegacyValue(config, key, value);
+            }
+        } catch (IOException exception) {
+            SecondWindMod.LOGGER.warn("Failed to read legacy config file {}", path, exception);
+        }
+
+        return migratedAny;
+    }
+
+    private static String stripTomlComment(String line) {
+        int commentIndex = line.indexOf('#');
+        return commentIndex >= 0 ? line.substring(0, commentIndex) : line;
+    }
+
+    private static String mapLegacyTomlKey(String key) {
+        return key.startsWith("secondWind.multiplayerRevive.")
+                || key.startsWith("secondWind.killRules.")
+                || key.startsWith("secondWind.clientFeedback.")
+                ? key.substring("secondWind.".length())
+                : key;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static boolean applyLegacyValue(ConfigWrapper<?> config, String key, String rawValue) {
+        Option option = config.optionForKey(new Option.Key(key));
+        if (option == null) {
+            return false;
+        }
+
+        try {
+            option.set(parseLegacyValue(option.clazz(), rawValue));
+            return true;
+        } catch (Exception exception) {
+            SecondWindMod.LOGGER.warn("Failed to migrate legacy config value {}={}", key, rawValue, exception);
+            return false;
+        }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static Object parseLegacyValue(Class<?> valueType, String rawValue) {
+        String normalized = rawValue.trim();
+        if ((normalized.startsWith("\"") && normalized.endsWith("\""))
+                || (normalized.startsWith("'") && normalized.endsWith("'"))) {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+
+        if (valueType == boolean.class || valueType == Boolean.class) {
+            return Boolean.parseBoolean(normalized);
+        }
+        if (valueType == int.class || valueType == Integer.class) {
+            return Integer.parseInt(normalized);
+        }
+        if (valueType == double.class || valueType == Double.class) {
+            return Double.parseDouble(normalized);
+        }
+        if (valueType.isEnum()) {
+            return Enum.valueOf((Class<? extends Enum>) valueType.asSubclass(Enum.class), normalized);
+        }
+        throw new IllegalArgumentException("Unsupported legacy config value type: " + valueType.getName());
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void resetOption(Option<?> option) {
+        ((Option) option).set(option.defaultValue());
+    }
+
+    private static <T> ConfigValue<T> bind(String key, Class<T> expectedType) {
+        Option<?> option = CONFIG.optionForKey(new Option.Key(key));
+        if (option == null) {
+            throw new IllegalStateException("Missing config option: " + key);
+        }
+        if (!isCompatibleType(option.clazz(), expectedType)) {
+            throw new IllegalStateException("Config option " + key + " expected " + expectedType.getName()
+                    + " but found " + option.clazz().getName());
+        }
+        @SuppressWarnings("unchecked")
+        Option<T> typedOption = (Option<T>) option;
+        return new ConfigValue<>(typedOption);
+    }
+
+    private static boolean isCompatibleType(Class<?> actualType, Class<?> expectedType) {
+        return boxed(actualType) == boxed(expectedType);
+    }
+
+    private static Class<?> boxed(Class<?> type) {
+        if (!type.isPrimitive()) {
+            return type;
+        }
+        if (type == boolean.class) {
+            return Boolean.class;
+        }
+        if (type == int.class) {
+            return Integer.class;
+        }
+        if (type == double.class) {
+            return Double.class;
+        }
+        return type;
+    }
+
+    public static final class ConfigValue<T> {
+        private final Option<T> option;
+
+        private ConfigValue(Option<T> option) {
+            this.option = option;
+        }
+
+        public T get() {
+            return option.value();
+        }
+
+        public void set(T value) {
+            option.set(value);
+        }
+
+        public Option<T> option() {
+            return option;
+        }
     }
 }

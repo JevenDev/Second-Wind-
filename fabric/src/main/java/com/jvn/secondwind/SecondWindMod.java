@@ -16,7 +16,7 @@ public final class SecondWindMod implements ModInitializer {
     @Override
     public void onInitialize() {
         SecondWindCommon.init();
-        SecondWindConfig.load();
+        SecondWindConfig.init();
         SecondWindItems.register();
         SecondWindCriteria.register();
         SecondWindNetworking.registerPayloads();

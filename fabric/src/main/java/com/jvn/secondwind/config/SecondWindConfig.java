@@ -1,318 +1,244 @@
 package com.jvn.secondwind.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.jvn.secondwind.SecondWindMod;
+import io.wispforest.owo.config.ConfigWrapper;
+import io.wispforest.owo.config.Option;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import net.fabricmc.loader.api.FabricLoader;
 
 public final class SecondWindConfig {
-    public static final IntValue DOWNED_TIMER_SECONDS = new IntValue(12);
-    public static final IntValue MINIMUM_DOWNED_TIMER_SECONDS = new IntValue(3);
-    public static final IntValue TIMER_PENALTY_PER_DOWN = new IntValue(2);
-    public static final IntValue DOWNED_SLOWNESS_LEVEL = new IntValue(3);
-    public static final BooleanValue DOWNED_DAMAGE_REDUCES_TIMER = new BooleanValue(true);
-    public static final IntValue DOWNED_DAMAGE_COOLDOWN_TICKS = new IntValue(30);
-    public static final BooleanValue DOWNED_DAMAGE_REGISTERS = new BooleanValue(false);
-    public static final BooleanValue BLOCK_HEALING_WHILE_DOWNED = new BooleanValue(true);
-    public static final BooleanValue BLOCK_EATING_WHILE_DOWNED = new BooleanValue(true);
-    public static final IntValue REVIVE_HEALTH_HALF_HEARTS = new IntValue(12);
-    public static final IntValue REVIVE_REGENERATION_SECONDS = new IntValue(3);
-    public static final IntValue POST_REVIVE_INVULNERABILITY_SECONDS = new IntValue(2);
-    public static final EnumValue<CooldownMode> COOLDOWN_MODE = new EnumValue<>(CooldownMode.TIMED);
-    public static final IntValue COOLDOWN_DURATION_SECONDS = new IntValue(300);
-    public static final BooleanValue RESET_COOLDOWN_ON_DEATH = new BooleanValue(true);
-    public static final BooleanValue MULTIPLAYER_REVIVE = new BooleanValue(true);
-    public static final DoubleValue REVIVE_CHANNEL_SECONDS = new DoubleValue(2.0D);
-    public static final DoubleValue REVIVE_DISTANCE = new DoubleValue(2.5D);
-    public static final BooleanValue REVIVE_INTERRUPT_ON_DAMAGE = new BooleanValue(true);
-    public static final BooleanValue ALLOW_PASSIVE_KILLS = new BooleanValue(false);
-    public static final BooleanValue ALLOW_PLAYER_KILLS = new BooleanValue(true);
-    public static final BooleanValue ALLOW_PET_KILLS = new BooleanValue(false);
-    public static final BooleanValue ALLOW_VOID_SECOND_WIND = new BooleanValue(false);
-    public static final BooleanValue ENABLE_DOWNED_VIGNETTE = new BooleanValue(true);
-    public static final BooleanValue ENABLE_DESATURATION = new BooleanValue(true);
-    public static final BooleanValue ENABLE_DOWNED_BLOOM = new BooleanValue(true);
-    public static final BooleanValue ENABLE_SOUNDS = new BooleanValue(true);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    public static final ConfigWrapper<?> CONFIG = loadConfig();
+
+    public static final ConfigValue<Integer> DOWNED_TIMER_SECONDS = bind("secondWind.downedTimerSeconds", Integer.class);
+    public static final ConfigValue<Integer> MINIMUM_DOWNED_TIMER_SECONDS = bind("secondWind.minimumDownedTimerSeconds", Integer.class);
+    public static final ConfigValue<Integer> TIMER_PENALTY_PER_DOWN = bind("secondWind.timerPenaltyPerDown", Integer.class);
+    public static final ConfigValue<Integer> DOWNED_SLOWNESS_LEVEL = bind("secondWind.downedSlownessLevel", Integer.class);
+    public static final ConfigValue<Boolean> DOWNED_DAMAGE_REDUCES_TIMER = bind("secondWind.downedDamageReducesTimer", Boolean.class);
+    public static final ConfigValue<Integer> DOWNED_DAMAGE_COOLDOWN_TICKS = bind("secondWind.downedDamageCooldownTicks", Integer.class);
+    public static final ConfigValue<Boolean> DOWNED_DAMAGE_REGISTERS = bind("secondWind.downedDamageRegisters", Boolean.class);
+    public static final ConfigValue<Boolean> BLOCK_HEALING_WHILE_DOWNED = bind("secondWind.blockHealingWhileDowned", Boolean.class);
+    public static final ConfigValue<Boolean> BLOCK_EATING_WHILE_DOWNED = bind("secondWind.blockEatingWhileDowned", Boolean.class);
+    public static final ConfigValue<Integer> REVIVE_HEALTH_HALF_HEARTS = bind("secondWind.reviveHealthHalfHearts", Integer.class);
+    public static final ConfigValue<Integer> REVIVE_REGENERATION_SECONDS = bind("secondWind.reviveRegenerationSeconds", Integer.class);
+    public static final ConfigValue<Integer> POST_REVIVE_INVULNERABILITY_SECONDS = bind("secondWind.postReviveInvulnerabilitySeconds", Integer.class);
+    public static final ConfigValue<CooldownMode> COOLDOWN_MODE = bind("secondWind.cooldownMode", CooldownMode.class);
+    public static final ConfigValue<Integer> COOLDOWN_DURATION_SECONDS = bind("secondWind.cooldownDurationSeconds", Integer.class);
+    public static final ConfigValue<Boolean> RESET_COOLDOWN_ON_DEATH = bind("secondWind.resetCooldownOnDeath", Boolean.class);
+    public static final ConfigValue<Boolean> MULTIPLAYER_REVIVE = bind("multiplayerRevive.multiplayerRevive", Boolean.class);
+    public static final ConfigValue<Double> REVIVE_CHANNEL_SECONDS = bind("multiplayerRevive.reviveChannelSeconds", Double.class);
+    public static final ConfigValue<Double> REVIVE_DISTANCE = bind("multiplayerRevive.reviveDistance", Double.class);
+    public static final ConfigValue<Boolean> REVIVE_INTERRUPT_ON_DAMAGE = bind("multiplayerRevive.reviveInterruptOnDamage", Boolean.class);
+    public static final ConfigValue<Boolean> ALLOW_PASSIVE_KILLS = bind("killRules.allowPassiveKills", Boolean.class);
+    public static final ConfigValue<Boolean> ALLOW_PLAYER_KILLS = bind("killRules.allowPlayerKills", Boolean.class);
+    public static final ConfigValue<Boolean> ALLOW_PET_KILLS = bind("killRules.allowPetKills", Boolean.class);
+    public static final ConfigValue<Boolean> ALLOW_VOID_SECOND_WIND = bind("killRules.allowVoidSecondWind", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_DOWNED_VIGNETTE = bind("clientFeedback.enableDownedVignette", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_DESATURATION = bind("clientFeedback.enableDesaturation", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_DOWNED_BLOOM = bind("clientFeedback.enableDownedBloom", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_SOUNDS = bind("clientFeedback.enableSounds", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_CHAT_MESSAGES = bind("clientFeedback.enableChatMessages", Boolean.class);
+    public static final ConfigValue<Boolean> LOCALIZE_CHAT_MESSAGES = bind("clientFeedback.localizeChatMessages", Boolean.class);
+    public static final ConfigValue<Boolean> ENABLE_SECOND_WIND_POPUP = bind("clientFeedback.enableSecondWindPopup", Boolean.class);
+    public static final ConfigValue<Boolean> USE_SIMPLE_DOWNED_TIMER = bind("clientFeedback.useSimpleDownedTimer", Boolean.class);
+
+    private static final Map<String, String> LEGACY_KEYS = Map.ofEntries(
+            Map.entry("downedTimerSeconds", "secondWind.downedTimerSeconds"),
+            Map.entry("minimumDownedTimerSeconds", "secondWind.minimumDownedTimerSeconds"),
+            Map.entry("timerPenaltyPerDown", "secondWind.timerPenaltyPerDown"),
+            Map.entry("downedSlownessLevel", "secondWind.downedSlownessLevel"),
+            Map.entry("downedDamageReducesTimer", "secondWind.downedDamageReducesTimer"),
+            Map.entry("downedDamageCooldownTicks", "secondWind.downedDamageCooldownTicks"),
+            Map.entry("downedDamageRegisters", "secondWind.downedDamageRegisters"),
+            Map.entry("blockHealingWhileDowned", "secondWind.blockHealingWhileDowned"),
+            Map.entry("blockEatingWhileDowned", "secondWind.blockEatingWhileDowned"),
+            Map.entry("reviveHealthHalfHearts", "secondWind.reviveHealthHalfHearts"),
+            Map.entry("reviveRegenerationSeconds", "secondWind.reviveRegenerationSeconds"),
+            Map.entry("postReviveInvulnerabilitySeconds", "secondWind.postReviveInvulnerabilitySeconds"),
+            Map.entry("cooldownMode", "secondWind.cooldownMode"),
+            Map.entry("cooldownDurationSeconds", "secondWind.cooldownDurationSeconds"),
+            Map.entry("resetCooldownOnDeath", "secondWind.resetCooldownOnDeath"),
+            Map.entry("multiplayerRevive", "multiplayerRevive.multiplayerRevive"),
+            Map.entry("reviveChannelSeconds", "multiplayerRevive.reviveChannelSeconds"),
+            Map.entry("reviveDistance", "multiplayerRevive.reviveDistance"),
+            Map.entry("reviveInterruptOnDamage", "multiplayerRevive.reviveInterruptOnDamage"),
+            Map.entry("allowPassiveKills", "killRules.allowPassiveKills"),
+            Map.entry("allowPlayerKills", "killRules.allowPlayerKills"),
+            Map.entry("allowPetKills", "killRules.allowPetKills"),
+            Map.entry("allowVoidSecondWind", "killRules.allowVoidSecondWind"),
+            Map.entry("enableDownedVignette", "clientFeedback.enableDownedVignette"),
+            Map.entry("enableDesaturation", "clientFeedback.enableDesaturation"),
+            Map.entry("enableDownedBloom", "clientFeedback.enableDownedBloom"),
+            Map.entry("enableSounds", "clientFeedback.enableSounds"),
+            Map.entry("enableChatMessages", "clientFeedback.enableChatMessages"),
+            Map.entry("localizeChatMessages", "clientFeedback.localizeChatMessages"),
+            Map.entry("enableSecondWindPopup", "clientFeedback.enableSecondWindPopup"),
+            Map.entry("useSimpleDownedTimer", "clientFeedback.useSimpleDownedTimer"));
 
     private SecondWindConfig() {
     }
 
-    public static void load() {
-        Path path = configPath();
-        if (Files.exists(path)) {
-            try (Reader reader = Files.newBufferedReader(path)) {
-                JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-                apply(root);
-            } catch (Exception exception) {
-                SecondWindMod.LOGGER.warn("Failed to read Fabric config at {}; using defaults.", path, exception);
-            }
-        }
+    public static void init() {
+    }
 
-        try {
-            write(path);
-        } catch (IOException exception) {
-            SecondWindMod.LOGGER.warn("Failed to write Fabric config defaults to {}.", path, exception);
-        }
+    public static void load() {
+        CONFIG.load();
     }
 
     public static void save() {
-        try {
-            write(configPath());
-        } catch (IOException exception) {
-            SecondWindMod.LOGGER.warn("Failed to save Fabric config.", exception);
-        }
+        CONFIG.save();
     }
 
     public static void resetDefaults() {
-        DOWNED_TIMER_SECONDS.reset();
-        MINIMUM_DOWNED_TIMER_SECONDS.reset();
-        TIMER_PENALTY_PER_DOWN.reset();
-        DOWNED_SLOWNESS_LEVEL.reset();
-        DOWNED_DAMAGE_REDUCES_TIMER.reset();
-        DOWNED_DAMAGE_COOLDOWN_TICKS.reset();
-        DOWNED_DAMAGE_REGISTERS.reset();
-        BLOCK_HEALING_WHILE_DOWNED.reset();
-        BLOCK_EATING_WHILE_DOWNED.reset();
-        REVIVE_HEALTH_HALF_HEARTS.reset();
-        REVIVE_REGENERATION_SECONDS.reset();
-        POST_REVIVE_INVULNERABILITY_SECONDS.reset();
-        COOLDOWN_MODE.reset();
-        COOLDOWN_DURATION_SECONDS.reset();
-        RESET_COOLDOWN_ON_DEATH.reset();
-        MULTIPLAYER_REVIVE.reset();
-        REVIVE_CHANNEL_SECONDS.reset();
-        REVIVE_DISTANCE.reset();
-        REVIVE_INTERRUPT_ON_DAMAGE.reset();
-        ALLOW_PASSIVE_KILLS.reset();
-        ALLOW_PLAYER_KILLS.reset();
-        ALLOW_PET_KILLS.reset();
-        ALLOW_VOID_SECOND_WIND.reset();
-        ENABLE_DOWNED_VIGNETTE.reset();
-        ENABLE_DESATURATION.reset();
-        ENABLE_DOWNED_BLOOM.reset();
-        ENABLE_SOUNDS.reset();
-        save();
+        CONFIG.allOptions().values().forEach(SecondWindConfig::resetOption);
+        CONFIG.save();
     }
 
-    private static Path configPath() {
-        return FabricLoader.getInstance().getConfigDir().resolve("secondwind.json");
+    private static ConfigWrapper<?> loadConfig() {
+        ConfigWrapper<?> config = instantiateConfigWrapper();
+        if (!migrateLegacyJsonIfNeeded(config)) {
+            config.load();
+        }
+        return config;
     }
 
-    private static void apply(JsonObject root) {
-        DOWNED_TIMER_SECONDS.read(root, "downedTimerSeconds");
-        MINIMUM_DOWNED_TIMER_SECONDS.read(root, "minimumDownedTimerSeconds");
-        TIMER_PENALTY_PER_DOWN.read(root, "timerPenaltyPerDown");
-        DOWNED_SLOWNESS_LEVEL.read(root, "downedSlownessLevel");
-        DOWNED_DAMAGE_REDUCES_TIMER.read(root, "downedDamageReducesTimer");
-        DOWNED_DAMAGE_COOLDOWN_TICKS.read(root, "downedDamageCooldownTicks");
-        DOWNED_DAMAGE_REGISTERS.read(root, "downedDamageRegisters");
-        BLOCK_HEALING_WHILE_DOWNED.read(root, "blockHealingWhileDowned");
-        BLOCK_EATING_WHILE_DOWNED.read(root, "blockEatingWhileDowned");
-        REVIVE_HEALTH_HALF_HEARTS.read(root, "reviveHealthHalfHearts");
-        REVIVE_REGENERATION_SECONDS.read(root, "reviveRegenerationSeconds");
-        POST_REVIVE_INVULNERABILITY_SECONDS.read(root, "postReviveInvulnerabilitySeconds");
-        COOLDOWN_MODE.read(root, "cooldownMode");
-        COOLDOWN_DURATION_SECONDS.read(root, "cooldownDurationSeconds");
-        RESET_COOLDOWN_ON_DEATH.read(root, "resetCooldownOnDeath");
-        MULTIPLAYER_REVIVE.read(root, "multiplayerRevive");
-        REVIVE_CHANNEL_SECONDS.read(root, "reviveChannelSeconds");
-        REVIVE_DISTANCE.read(root, "reviveDistance");
-        REVIVE_INTERRUPT_ON_DAMAGE.read(root, "reviveInterruptOnDamage");
-        ALLOW_PASSIVE_KILLS.read(root, "allowPassiveKills");
-        ALLOW_PLAYER_KILLS.read(root, "allowPlayerKills");
-        ALLOW_PET_KILLS.read(root, "allowPetKills");
-        ALLOW_VOID_SECOND_WIND.read(root, "allowVoidSecondWind");
-        ENABLE_DOWNED_VIGNETTE.read(root, "enableDownedVignette");
-        ENABLE_DESATURATION.read(root, "enableDesaturation");
-        ENABLE_DOWNED_BLOOM.read(root, "enableDownedBloom");
-        ENABLE_SOUNDS.read(root, "enableSounds");
-    }
-
-    private static void write(Path path) throws IOException {
-        Files.createDirectories(path.getParent());
-        JsonObject root = new JsonObject();
-        DOWNED_TIMER_SECONDS.write(root, "downedTimerSeconds");
-        MINIMUM_DOWNED_TIMER_SECONDS.write(root, "minimumDownedTimerSeconds");
-        TIMER_PENALTY_PER_DOWN.write(root, "timerPenaltyPerDown");
-        DOWNED_SLOWNESS_LEVEL.write(root, "downedSlownessLevel");
-        DOWNED_DAMAGE_REDUCES_TIMER.write(root, "downedDamageReducesTimer");
-        DOWNED_DAMAGE_COOLDOWN_TICKS.write(root, "downedDamageCooldownTicks");
-        DOWNED_DAMAGE_REGISTERS.write(root, "downedDamageRegisters");
-        BLOCK_HEALING_WHILE_DOWNED.write(root, "blockHealingWhileDowned");
-        BLOCK_EATING_WHILE_DOWNED.write(root, "blockEatingWhileDowned");
-        REVIVE_HEALTH_HALF_HEARTS.write(root, "reviveHealthHalfHearts");
-        REVIVE_REGENERATION_SECONDS.write(root, "reviveRegenerationSeconds");
-        POST_REVIVE_INVULNERABILITY_SECONDS.write(root, "postReviveInvulnerabilitySeconds");
-        COOLDOWN_MODE.write(root, "cooldownMode");
-        COOLDOWN_DURATION_SECONDS.write(root, "cooldownDurationSeconds");
-        RESET_COOLDOWN_ON_DEATH.write(root, "resetCooldownOnDeath");
-        MULTIPLAYER_REVIVE.write(root, "multiplayerRevive");
-        REVIVE_CHANNEL_SECONDS.write(root, "reviveChannelSeconds");
-        REVIVE_DISTANCE.write(root, "reviveDistance");
-        REVIVE_INTERRUPT_ON_DAMAGE.write(root, "reviveInterruptOnDamage");
-        ALLOW_PASSIVE_KILLS.write(root, "allowPassiveKills");
-        ALLOW_PLAYER_KILLS.write(root, "allowPlayerKills");
-        ALLOW_PET_KILLS.write(root, "allowPetKills");
-        ALLOW_VOID_SECOND_WIND.write(root, "allowVoidSecondWind");
-        ENABLE_DOWNED_VIGNETTE.write(root, "enableDownedVignette");
-        ENABLE_DESATURATION.write(root, "enableDesaturation");
-        ENABLE_DOWNED_BLOOM.write(root, "enableDownedBloom");
-        ENABLE_SOUNDS.write(root, "enableSounds");
-        try (Writer writer = Files.newBufferedWriter(path)) {
-            GSON.toJson(root, writer);
+    private static ConfigWrapper<?> instantiateConfigWrapper() {
+        try {
+            Class<?> wrapperClass = Class.forName("com.jvn.secondwind.config.SecondWindOwoConfig");
+            var constructor = wrapperClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return (ConfigWrapper<?>) constructor.newInstance();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+                 | NoSuchMethodException | InvocationTargetException exception) {
+            throw new IllegalStateException("Failed to initialize generated owo config wrapper", exception);
         }
     }
 
-    public static final class IntValue {
-        private final int defaultValue;
-        private int value;
-
-        private IntValue(int value) {
-            this.defaultValue = value;
-            this.value = value;
+    private static boolean migrateLegacyJsonIfNeeded(ConfigWrapper<?> config) {
+        if (Files.exists(config.fileLocation())) {
+            return false;
         }
 
-        public Integer get() {
-            return value;
+        Path legacyPath = FabricLoader.getInstance().getConfigDir().resolve("secondwind.json");
+        if (!Files.exists(legacyPath)) {
+            return false;
         }
 
-        public void set(int value) {
-            this.value = value;
-        }
-
-        private void reset() {
-            value = defaultValue;
-        }
-
-        private void read(JsonObject root, String key) {
-            if (root.has(key)) {
-                value = root.get(key).getAsInt();
+        boolean migratedAny = false;
+        try (Reader reader = Files.newBufferedReader(legacyPath)) {
+            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            for (Map.Entry<String, String> entry : LEGACY_KEYS.entrySet()) {
+                if (!root.has(entry.getKey())) {
+                    continue;
+                }
+                migratedAny |= applyJsonValue(config, entry.getValue(), root.get(entry.getKey()));
             }
+        } catch (Exception exception) {
+            SecondWindMod.LOGGER.warn("Failed to migrate legacy Fabric config from {}.", legacyPath, exception);
         }
 
-        private void write(JsonObject root, String key) {
-            root.addProperty(key, value);
+        if (migratedAny) {
+            config.save();
+        }
+        return migratedAny;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static boolean applyJsonValue(ConfigWrapper<?> config, String key, JsonElement element) {
+        Option option = config.optionForKey(new Option.Key(key));
+        if (option == null) {
+            return false;
+        }
+
+        try {
+            option.set(parseJsonValue(option.clazz(), element));
+            return true;
+        } catch (Exception exception) {
+            SecondWindMod.LOGGER.warn("Failed to migrate legacy config value {}", key, exception);
+            return false;
         }
     }
 
-    public static final class DoubleValue {
-        private final double defaultValue;
-        private double value;
-
-        private DoubleValue(double value) {
-            this.defaultValue = value;
-            this.value = value;
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static Object parseJsonValue(Class<?> type, JsonElement element) {
+        if (type == boolean.class || type == Boolean.class) {
+            return element.getAsBoolean();
         }
-
-        public Double get() {
-            return value;
+        if (type == int.class || type == Integer.class) {
+            return element.getAsInt();
         }
-
-        public void set(double value) {
-            this.value = value;
+        if (type == double.class || type == Double.class) {
+            return element.getAsDouble();
         }
-
-        private void reset() {
-            value = defaultValue;
+        if (type.isEnum()) {
+            return Enum.valueOf((Class<? extends Enum>) type.asSubclass(Enum.class), element.getAsString());
         }
-
-        private void read(JsonObject root, String key) {
-            if (root.has(key)) {
-                value = root.get(key).getAsDouble();
-            }
-        }
-
-        private void write(JsonObject root, String key) {
-            root.addProperty(key, value);
-        }
+        throw new IllegalArgumentException("Unsupported legacy config value type: " + type.getName());
     }
 
-    public static final class BooleanValue {
-        private final boolean defaultValue;
-        private boolean value;
-
-        private BooleanValue(boolean value) {
-            this.defaultValue = value;
-            this.value = value;
-        }
-
-        public Boolean get() {
-            return value;
-        }
-
-        public void set(boolean value) {
-            this.value = value;
-        }
-
-        public void toggle() {
-            value = !value;
-        }
-
-        private void reset() {
-            value = defaultValue;
-        }
-
-        private void read(JsonObject root, String key) {
-            if (root.has(key)) {
-                value = root.get(key).getAsBoolean();
-            }
-        }
-
-        private void write(JsonObject root, String key) {
-            root.addProperty(key, value);
-        }
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void resetOption(Option<?> option) {
+        ((Option) option).set(option.defaultValue());
     }
 
-    public static final class EnumValue<T extends Enum<T>> {
-        private final T defaultValue;
-        private T value;
+    private static <T> ConfigValue<T> bind(String key, Class<T> expectedType) {
+        Option<?> option = CONFIG.optionForKey(new Option.Key(key));
+        if (option == null) {
+            throw new IllegalStateException("Missing config option: " + key);
+        }
+        if (!isCompatibleType(option.clazz(), expectedType)) {
+            throw new IllegalStateException("Config option " + key + " expected " + expectedType.getName()
+                    + " but found " + option.clazz().getName());
+        }
+        @SuppressWarnings("unchecked")
+        Option<T> typedOption = (Option<T>) option;
+        return new ConfigValue<>(typedOption);
+    }
 
-        private EnumValue(T value) {
-            this.defaultValue = value;
-            this.value = value;
+    private static boolean isCompatibleType(Class<?> actualType, Class<?> expectedType) {
+        return boxed(actualType) == boxed(expectedType);
+    }
+
+    private static Class<?> boxed(Class<?> type) {
+        if (!type.isPrimitive()) {
+            return type;
+        }
+        if (type == boolean.class) {
+            return Boolean.class;
+        }
+        if (type == int.class) {
+            return Integer.class;
+        }
+        if (type == double.class) {
+            return Double.class;
+        }
+        return type;
+    }
+
+    public static final class ConfigValue<T> {
+        private final Option<T> option;
+
+        private ConfigValue(Option<T> option) {
+            this.option = option;
         }
 
         public T get() {
-            return value;
+            return option.value();
         }
 
         public void set(T value) {
-            this.value = value;
+            option.set(value);
         }
 
-        public void next() {
-            T[] values = value.getDeclaringClass().getEnumConstants();
-            value = values[(value.ordinal() + 1) % values.length];
-        }
-
-        private void reset() {
-            value = defaultValue;
-        }
-
-        private void read(JsonObject root, String key) {
-            if (!root.has(key)) {
-                return;
-            }
-
-            String name = root.get(key).getAsString();
-            for (T constant : value.getDeclaringClass().getEnumConstants()) {
-                if (constant.name().equalsIgnoreCase(name)) {
-                    value = constant;
-                    return;
-                }
-            }
-        }
-
-        private void write(JsonObject root, String key) {
-            root.addProperty(key, value.name());
+        public Option<T> option() {
+            return option;
         }
     }
 }

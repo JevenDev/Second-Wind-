@@ -239,8 +239,6 @@ There is also an in-game NeoForge config screen on the client.
 
 ## Compatibility
 
-* Built for NeoForge 1.21.1
-* Targets Java 21
 * Designed for multiplayer and singleplayer
 * Highly configurable for servers and modpacks
 * Eventually, will skip straight to 26.1/whatever the newest standard will be for modding.
@@ -250,8 +248,8 @@ Second Wind only triggers on supported lethal damage sources. Generic kill comma
 ## Version and Loaders
 
 * NeoForge 1.21.1 - active development
+* Fabric 1.21.1 - active development
 * Forge - not planned anytime soon, don't ask please :)
-* Fabric - possible future port, not anytime soon
 * Older Minecraft versions - not planned
 
 ![credits & license](https://cdn.modrinth.com/data/cached_images/5fd3ad80e342e6985dd6ebda1f7afd9c48749fce.png)

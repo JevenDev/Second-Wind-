@@ -30,7 +30,8 @@
     "fabric-api": ">=${fabric_api_version}",
     "minecraft": "${minecraft_version}",
     "architectury": ">=${architectury_version}",
-    "toucanlib": ">=${toucanlib_version}"
+    "toucanlib": ">=${toucanlib_version}",
+    "owo": ">=${owo_version}"
   },
   "suggests": {
     "modmenu": ">=${modmenu_version}"

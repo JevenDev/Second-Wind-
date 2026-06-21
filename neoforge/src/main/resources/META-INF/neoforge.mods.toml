@@ -31,6 +31,13 @@ side="BOTH"
 ${neoforge_toucanlib_dependency}
 
 [[dependencies."${mod_id}"]]
+modId="owo"
+type="required"
+versionRange="[${owo_version},)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies."${mod_id}"]]
 modId="minecraft"
 type="required"
 versionRange="${minecraft_version_range}"

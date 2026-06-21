@@ -31,8 +31,28 @@ allprojects {
             url = 'https://maven.fabricmc.net/'
         }
         maven {
+            name = 'Quilt'
+            url = 'https://maven.quiltmc.org/repository/release/'
+        }
+        maven {
             name = 'TerraformersMC'
             url = 'https://maven.terraformersmc.com/releases/'
+        }
+        maven {
+            name = 'Wisp Forest'
+            url = 'https://maven.wispforest.io/releases/'
+        }
+        maven {
+            name = 'JitPack'
+            url = 'https://jitpack.io'
+        }
+        maven {
+            name = 'Sinytra'
+            url = 'https://maven.sinytra.org/'
+        }
+        maven {
+            name = 'Kotlin for Forge'
+            url = 'https://thedarkcolour.github.io/KotlinForForge/'
         }
         maven {
             name = 'NeoForge'

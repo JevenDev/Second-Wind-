@@ -11,6 +11,7 @@ import net.minecraft.core.particles.DustColorTransitionOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -225,7 +226,7 @@ public final class SecondWindService {
             SecondWindPlayerState state = getState(other);
             if (state.getReviveChannelReviver().filter(player.getUUID()::equals).isPresent()) {
                 state.clearReviveChannel();
-                player.displayClientMessage(Component.literal("Revive interrupted"), true);
+                player.displayClientMessage(Component.translatable("hud.secondwind.revive_interrupted"), true);
                 SecondWindNetworking.syncToPlayer(other);
             }
         }
@@ -397,13 +398,21 @@ public final class SecondWindService {
     }
 
     private static void announcePlayerDowned(ServerPlayer player) {
+        if (!SecondWindConfig.ENABLE_CHAT_MESSAGES.get()) {
+            return;
+        }
+
         int variant = player.getRandom().nextInt(DOWNED_ANNOUNCEMENT_VARIANTS);
-        Component message = Component.translatable("message.secondwind.downed." + variant, player.getDisplayName())
+        Component message = chatAnnouncement("message.secondwind.downed." + variant, player)
                 .withStyle(ChatFormatting.RED);
         player.server.getPlayerList().broadcastSystemMessage(message, false);
     }
 
     private static void announcePlayerRevived(ServerPlayer player, ReviveReason reason) {
+        if (!SecondWindConfig.ENABLE_CHAT_MESSAGES.get()) {
+            return;
+        }
+
         int variantBound = switch (reason) {
             case PLAYER_REVIVE -> PLAYER_REVIVE_ANNOUNCEMENT_VARIANTS;
             case KILL -> KILL_REVIVE_ANNOUNCEMENT_VARIANTS;
@@ -415,9 +424,14 @@ public final class SecondWindService {
             case KILL -> "kill";
             case ADMIN -> "admin";
         };
-        Component message = Component.translatable("message.secondwind.revived." + reasonKey + "." + variant, player.getDisplayName())
+        Component message = chatAnnouncement("message.secondwind.revived." + reasonKey + "." + variant, player)
             .withStyle(ChatFormatting.GREEN);
         player.server.getPlayerList().broadcastSystemMessage(message, false);
+    }
+
+    private static MutableComponent chatAnnouncement(String key, ServerPlayer player) {
+        MutableComponent translated = Component.translatable(key, player.getDisplayName());
+        return SecondWindConfig.LOCALIZE_CHAT_MESSAGES.get() ? translated : Component.literal(translated.getString());
     }
 
     private static void spawnRevivePopParticles(ServerPlayer player) {
@@ -463,7 +477,7 @@ public final class SecondWindService {
 
         if (state.getReviveChannelTicks() >= state.getReviveChannelRequiredTicks()) {
             revive(downedPlayer, ReviveReason.PLAYER_REVIVE);
-            reviver.displayClientMessage(Component.literal("Revived"), true);
+            reviver.displayClientMessage(Component.translatable("hud.secondwind.revived"), true);
         } else if (state.getReviveChannelTicks() % 5 == 0) {
             SecondWindNetworking.syncToPlayer(downedPlayer);
         }

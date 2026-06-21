@@ -33,6 +33,9 @@ dependencies {
     modApi "dev.architectury:architectury-fabric:${rootProject.architectury_version}"
     modCompileOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
     modRuntimeOnly "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
+    modImplementation "io.wispforest:owo-lib:${rootProject.owo_fabric_version}"
+    annotationProcessor "io.wispforest:owo-lib:${rootProject.owo_fabric_version}"
+    include "io.wispforest:owo-sentinel:${rootProject.owo_fabric_version}"
 
     if (rootProject.enable_toucanlib.toBoolean()) {
         modImplementation "curse.maven:toucanlib-${rootProject.toucanlib_curse_project_id}:${rootProject.toucanlib_curse_file_id}"
@@ -63,6 +66,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_package           : rootProject.maven_group,
             toucanlib_version     : rootProject.toucanlib_version,
             modmenu_version       : rootProject.modmenu_version,
+            owo_version           : rootProject.owo_fabric_version,
     ]
     inputs.properties replaceProperties
 
