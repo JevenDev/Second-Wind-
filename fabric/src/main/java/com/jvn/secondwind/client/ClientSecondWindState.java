@@ -8,9 +8,16 @@ import net.minecraft.util.Mth;
 
 public final class ClientSecondWindState {
     private static final int REVIVE_OVERLAY_FADE_TICKS = 6;
+    private static final long DOWNED_TIMER_DAMAGE_CATCHUP_NANOS = 700_000_000L;
+    private static final long SIMPLE_TIMER_DAMAGE_FLASH_HOLD_NANOS = 120_000_000L;
+    private static final long SIMPLE_TIMER_DAMAGE_FLASH_FADE_NANOS = 1_050_000_000L;
     private static boolean downed;
     private static int ticksRemaining;
     private static int maxTicks;
+    private static float downedTimerDamageLostTicks;
+    private static long downedTimerDamageStartNanos;
+    private static long downedTimerDamagePausedElapsedNanos;
+    private static long downedTimerDamagePauseStartedNanos = -1L;
     private static boolean giveUpAvailable;
     private static float reviveProgress;
     private static float displayedReviveProgress;
@@ -39,7 +46,8 @@ public final class ClientSecondWindState {
     public static void apply(ClientboundSecondWindStatePayload payload) {
         float currentDisplayedReviveProgress = displayedReviveProgress();
         boolean hadReviveOverlay = hasReviveOverlay();
-        downed = payload.downed();
+        boolean wasDowned = downed;
+        boolean newDowned = payload.downed();
         if (payload.showReviveFlash() && SecondWindConfig.ENABLE_SECOND_WIND_POPUP.get()) {
             revivedFlashTicks = SecondWindReviveFlashEffect.DURATION_TICKS;
             SecondWindReviveFlashEffect.beginActivation();
@@ -49,6 +57,7 @@ public final class ClientSecondWindState {
         }
         ticksRemaining = payload.ticksRemaining();
         maxTicks = payload.maxTicks();
+        downed = newDowned;
         giveUpAvailable = payload.giveUpAvailable();
         reviveProgress = payload.reviveProgress();
         timerPaused = payload.timerPaused();
@@ -57,6 +66,12 @@ public final class ClientSecondWindState {
         ticksRemainingSyncNanos = System.nanoTime();
         pausedElapsedNanos = 0L;
         pauseStartedNanos = -1L;
+
+        if (downed && wasDowned && payload.damageTicksLost() > 0) {
+            beginDownedTimerDamage(payload.damageTicksLost());
+        } else if (!downed || !wasDowned) {
+            clearDownedTimerDamage();
+        }
 
         if (!downed) {
             clearReviveOverlay();
@@ -103,11 +118,40 @@ public final class ClientSecondWindState {
         long effectiveNow = pauseStartedNanos >= 0L ? pauseStartedNanos : now;
         long elapsedNanos = Math.max(0L, effectiveNow - ticksRemainingSyncNanos - pausedElapsedNanos);
         float elapsedTicks = elapsedNanos / 50_000_000.0F;
-        return Math.max(0.0F, ticksRemaining - elapsedTicks);
+        return Mth.clamp(ticksRemaining - elapsedTicks, 0.0F, maxTicks);
     }
 
     public static int maxTicks() {
         return maxTicks;
+    }
+
+    public static float downedTimerDamageStartTicks() {
+        return displayedTicksRemaining();
+    }
+
+    public static float downedTimerDamageEndTicks() {
+        return Mth.clamp(displayedTicksRemaining() + displayedDownedTimerDamageLostTicks(), 0.0F, maxTicks);
+    }
+
+    public static boolean hasDownedTimerDamage() {
+        return displayedDownedTimerDamageLostTicks() > 0.5F;
+    }
+
+    public static float downedTimerDamageFlashStrength() {
+        if (downedTimerDamageLostTicks <= 0.0F) {
+            return 0.0F;
+        }
+
+        long elapsedNanos = downedTimerDamageElapsedNanos();
+        if (elapsedNanos <= SIMPLE_TIMER_DAMAGE_FLASH_HOLD_NANOS) {
+            return 1.0F;
+        }
+
+        float progress = Mth.clamp(
+                (elapsedNanos - SIMPLE_TIMER_DAMAGE_FLASH_HOLD_NANOS) / (float) SIMPLE_TIMER_DAMAGE_FLASH_FADE_NANOS,
+                0.0F,
+                1.0F);
+        return 1.0F - smoothstep(progress);
     }
 
     public static boolean giveUpAvailable() {
@@ -189,6 +233,66 @@ public final class ClientSecondWindState {
         displayedReviverName = "";
         reviveOverlayFadeTicks = 0;
         reviveProgressSyncNanos = 0L;
+    }
+
+    private static void beginDownedTimerDamage(int damageTicksLost) {
+        if (maxTicks <= 0 || damageTicksLost <= 0) {
+            clearDownedTimerDamage();
+            return;
+        }
+
+        float currentTicks = Mth.clamp(ticksRemaining, 0, maxTicks);
+        float previousTicks = Mth.clamp(ticksRemaining + damageTicksLost, currentTicks, maxTicks);
+        float trailingTicks = downedTimerDamageEndTicks();
+        downedTimerDamageLostTicks = Math.max(previousTicks, trailingTicks) - currentTicks;
+        downedTimerDamageStartNanos = System.nanoTime();
+        downedTimerDamagePausedElapsedNanos = 0L;
+        downedTimerDamagePauseStartedNanos = -1L;
+    }
+
+    private static void clearDownedTimerDamage() {
+        downedTimerDamageLostTicks = 0.0F;
+        downedTimerDamageStartNanos = 0L;
+        downedTimerDamagePausedElapsedNanos = 0L;
+        downedTimerDamagePauseStartedNanos = -1L;
+    }
+
+    private static float displayedDownedTimerDamageLostTicks() {
+        if (downedTimerDamageLostTicks <= 0.0F || downedTimerDamageStartNanos <= 0L) {
+            return 0.0F;
+        }
+
+        long elapsedNanos = downedTimerDamageElapsedNanos();
+        float progress = Mth.clamp(
+                elapsedNanos / (float) DOWNED_TIMER_DAMAGE_CATCHUP_NANOS,
+                0.0F,
+                1.0F);
+        float remaining = 1.0F - easeOutCubic(progress);
+        return downedTimerDamageLostTicks * remaining;
+    }
+
+    private static long downedTimerDamageElapsedNanos() {
+        long now = System.nanoTime();
+        if (shouldFreezeDisplayedTimer()) {
+            if (downedTimerDamagePauseStartedNanos < 0L) {
+                downedTimerDamagePauseStartedNanos = now;
+            }
+        } else if (downedTimerDamagePauseStartedNanos >= 0L) {
+            downedTimerDamagePausedElapsedNanos += now - downedTimerDamagePauseStartedNanos;
+            downedTimerDamagePauseStartedNanos = -1L;
+        }
+
+        long effectiveNow = downedTimerDamagePauseStartedNanos >= 0L ? downedTimerDamagePauseStartedNanos : now;
+        return Math.max(0L, effectiveNow - downedTimerDamageStartNanos - downedTimerDamagePausedElapsedNanos);
+    }
+
+    private static float easeOutCubic(float progress) {
+        float inverse = 1.0F - progress;
+        return 1.0F - inverse * inverse * inverse;
+    }
+
+    private static float smoothstep(float progress) {
+        return progress * progress * (3.0F - 2.0F * progress);
     }
 
     private static boolean shouldFreezeDisplayedTimer() {

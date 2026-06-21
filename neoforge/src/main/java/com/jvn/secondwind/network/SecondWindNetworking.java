@@ -10,7 +10,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 public final class SecondWindNetworking {
-    private static final String NETWORK_VERSION = "3";
+    private static final String NETWORK_VERSION = "4";
 
     private SecondWindNetworking() {
     }
@@ -32,19 +32,24 @@ public final class SecondWindNetworking {
     }
 
     public static void syncToPlayer(ServerPlayer player) {
-        syncToPlayer(player, false);
+        syncToPlayer(player, false, 0);
     }
 
     public static void syncToPlayer(ServerPlayer player, boolean showReviveFlash) {
+        syncToPlayer(player, showReviveFlash, 0);
+    }
+
+    public static void syncToPlayer(ServerPlayer player, boolean showReviveFlash, int damageTicksLost) {
         SecondWindPlayerState state = SecondWindService.getState(player);
         int cooldownSeconds = SecondWindService.getCooldownRemainingSeconds(player);
         PacketDistributor.sendToPlayer(player, new ClientboundSecondWindStatePayload(
                 state.isDowned(),
                 state.getDownedTicksRemaining(),
                 state.getDownedMaxTicks(),
+                Math.max(0, damageTicksLost),
                 state.isDowned(),
                 state.getReviveChannelProgress(),
-            SecondWindService.isBeingRevived(player),
+                SecondWindService.isBeingRevived(player),
                 cooldownSeconds,
                 showReviveFlash,
                 currentReviverName(player, state)));
@@ -65,8 +70,8 @@ public final class SecondWindNetworking {
                 player.getId(),
                 state.isDowned(),
                 state.getDownedTicksRemaining(),
-            state.getDownedMaxTicks(),
-            SecondWindService.isBeingRevived(player));
+                state.getDownedMaxTicks(),
+                SecondWindService.isBeingRevived(player));
 
         for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {
             if (other.serverLevel() == player.serverLevel()) {

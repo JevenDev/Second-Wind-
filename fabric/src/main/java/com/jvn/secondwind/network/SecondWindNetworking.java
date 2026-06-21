@@ -32,16 +32,21 @@ public final class SecondWindNetworking {
     }
 
     public static void syncToPlayer(ServerPlayer player) {
-        syncToPlayer(player, false);
+        syncToPlayer(player, false, 0);
     }
 
     public static void syncToPlayer(ServerPlayer player, boolean showReviveFlash) {
+        syncToPlayer(player, showReviveFlash, 0);
+    }
+
+    public static void syncToPlayer(ServerPlayer player, boolean showReviveFlash, int damageTicksLost) {
         SecondWindPlayerState state = SecondWindService.getState(player);
         int cooldownSeconds = SecondWindService.getCooldownRemainingSeconds(player);
         ServerPlayNetworking.send(player, new ClientboundSecondWindStatePayload(
                 state.isDowned(),
                 state.getDownedTicksRemaining(),
                 state.getDownedMaxTicks(),
+                Math.max(0, damageTicksLost),
                 state.isDowned(),
                 state.getReviveChannelProgress(),
                 SecondWindService.isBeingRevived(player),

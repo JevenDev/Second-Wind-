@@ -32,6 +32,9 @@ public final class SecondWindHud {
     private static final ResourceLocation LAST_STAND_BAR_FILL = ToucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_bar_fill.png");
+    private static final ResourceLocation LAST_STAND_BAR_DAMAGE = ToucanResourceLocations.id(
+            SecondWindMod.MOD_ID,
+            "gui/hud/last_stand_bar_damage.png");
     private static final ResourceLocation LAST_STAND_OVERLAY = ToucanResourceLocations.id(
             SecondWindMod.MOD_ID,
             "gui/hud/last_stand_overlay.png");
@@ -48,6 +51,8 @@ public final class SecondWindHud {
     private static final int CROSSHAIR_PRIMARY_TIMER_OFFSET_Y = 12;
     private static final int CROSSHAIR_SECONDARY_TIMER_OFFSET_Y = 26;
     private static final int REVIVE_TEXT_COLOR = 0xFF61D394;
+    private static final int SIMPLE_TIMER_COLOR = 0xFFFFFFFF;
+    private static final int SIMPLE_TIMER_DAMAGE_COLOR = 0xFFFF4040;
     public static final int TIMER_OUTLINE_COLOR = 0xFF000000;
 
     private SecondWindHud() {
@@ -145,6 +150,7 @@ public final class SecondWindHud {
                     LAST_STAND_WIDTH,
                     LAST_STAND_HEIGHT);
         }
+        renderDownedTimerDamage(graphics, x, y);
         graphics.blit(LAST_STAND_OVERLAY, x, y, 0.0F, 0.0F, LAST_STAND_WIDTH, LAST_STAND_HEIGHT, LAST_STAND_WIDTH, LAST_STAND_HEIGHT);
         drawOutlinedCenteredString(
                 graphics,
@@ -155,6 +161,32 @@ public final class SecondWindHud {
                 timerColor,
                 TIMER_OUTLINE_COLOR);
         graphics.pose().popPose();
+    }
+
+    private static void renderDownedTimerDamage(GuiGraphics graphics, int x, int y) {
+        int maxTicks = ClientSecondWindState.maxTicks();
+        if (!ClientSecondWindState.hasDownedTimerDamage() || maxTicks <= 0) {
+            return;
+        }
+
+        float startProgress = ClientSecondWindState.downedTimerDamageStartTicks() / (float) maxTicks;
+        float endProgress = ClientSecondWindState.downedTimerDamageEndTicks() / (float) maxTicks;
+        int startWidth = Mth.clamp(Mth.floor(startProgress * LAST_STAND_FILL_WIDTH), 0, LAST_STAND_FILL_WIDTH);
+        int endWidth = Mth.clamp(Mth.ceil(endProgress * LAST_STAND_FILL_WIDTH), 0, LAST_STAND_FILL_WIDTH);
+        if (endWidth <= startWidth) {
+            return;
+        }
+
+        graphics.blit(
+                LAST_STAND_BAR_DAMAGE,
+                x + LAST_STAND_FILL_LEFT + startWidth,
+                y,
+                LAST_STAND_FILL_LEFT + startWidth,
+                0.0F,
+                endWidth - startWidth,
+                LAST_STAND_HEIGHT,
+                LAST_STAND_WIDTH,
+                LAST_STAND_HEIGHT);
     }
 
     public static String formatTimerLabel(float displayedTicksRemaining) {
@@ -178,9 +210,21 @@ public final class SecondWindHud {
                 formatTimerLabel(displayedTicksRemaining),
                 centerX,
                 timerY,
-                timerTextColor(displayedTicksRemaining),
+                simpleTimerTextColor(),
                 TIMER_OUTLINE_COLOR);
         return true;
+    }
+
+    private static int simpleTimerTextColor() {
+        return lerpColor(SIMPLE_TIMER_COLOR, SIMPLE_TIMER_DAMAGE_COLOR, ClientSecondWindState.downedTimerDamageFlashStrength());
+    }
+
+    private static int lerpColor(int fromColor, int toColor, float amount) {
+        float clampedAmount = Mth.clamp(amount, 0.0F, 1.0F);
+        int red = Mth.floor(Mth.lerp(clampedAmount, fromColor >> 16 & 0xFF, toColor >> 16 & 0xFF));
+        int green = Mth.floor(Mth.lerp(clampedAmount, fromColor >> 8 & 0xFF, toColor >> 8 & 0xFF));
+        int blue = Mth.floor(Mth.lerp(clampedAmount, fromColor & 0xFF, toColor & 0xFF));
+        return 0xFF000000 | red << 16 | green << 8 | blue;
     }
 
     private static boolean renderReviveStatus(GuiGraphics graphics, Font font, int centerX, int centerY) {

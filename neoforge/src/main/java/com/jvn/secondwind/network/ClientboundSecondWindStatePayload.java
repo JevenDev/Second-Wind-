@@ -10,12 +10,13 @@ public record ClientboundSecondWindStatePayload(
         boolean downed,
         int ticksRemaining,
         int maxTicks,
+        int damageTicksLost,
         boolean giveUpAvailable,
         float reviveProgress,
-    boolean timerPaused,
+        boolean timerPaused,
         int cooldownSeconds,
-    boolean showReviveFlash,
-    String reviverName) implements CustomPacketPayload {
+        boolean showReviveFlash,
+        String reviverName) implements CustomPacketPayload {
     public static final Type<ClientboundSecondWindStatePayload> TYPE =
             new Type<>(ToucanResourceLocations.id(SecondWindMod.MOD_ID, "state"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundSecondWindStatePayload> STREAM_CODEC =
@@ -25,6 +26,7 @@ public record ClientboundSecondWindStatePayload(
         buffer.writeBoolean(payload.downed);
         buffer.writeVarInt(payload.ticksRemaining);
         buffer.writeVarInt(payload.maxTicks);
+        buffer.writeVarInt(payload.damageTicksLost);
         buffer.writeBoolean(payload.giveUpAvailable);
         buffer.writeFloat(payload.reviveProgress);
         buffer.writeBoolean(payload.timerPaused);
@@ -39,6 +41,7 @@ public record ClientboundSecondWindStatePayload(
     private static ClientboundSecondWindStatePayload read(RegistryFriendlyByteBuf buffer) {
         return new ClientboundSecondWindStatePayload(
                 buffer.readBoolean(),
+                buffer.readVarInt(),
                 buffer.readVarInt(),
                 buffer.readVarInt(),
                 buffer.readBoolean(),

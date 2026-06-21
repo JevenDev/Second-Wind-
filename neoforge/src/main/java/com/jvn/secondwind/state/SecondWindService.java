@@ -374,8 +374,10 @@ public final class SecondWindService {
             return false;
         }
 
+        int previousTicksRemaining = state.getDownedTicksRemaining();
         int timerPenaltyTicks = Math.max(1, Math.round(damageAmount * TICKS_PER_SECOND));
-        int remainingTicks = state.getDownedTicksRemaining() - timerPenaltyTicks;
+        int remainingTicks = previousTicksRemaining - timerPenaltyTicks;
+        int damageTicksLost = Math.min(previousTicksRemaining, timerPenaltyTicks);
         state.setDownedTicksRemaining(remainingTicks);
         state.setLastDownedDamageGameTime(gameTime);
 
@@ -389,7 +391,7 @@ public final class SecondWindService {
             return true;
         }
 
-        SecondWindNetworking.syncToPlayer(player);
+        SecondWindNetworking.syncToPlayer(player, false, damageTicksLost);
         return false;
     }
 
