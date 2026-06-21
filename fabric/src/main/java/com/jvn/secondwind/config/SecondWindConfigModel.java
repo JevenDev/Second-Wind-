@@ -46,6 +46,10 @@ public final class SecondWindConfigModel {
 
         public boolean downedDamageRegisters = false;
 
+        public boolean downedDamagePlaysHitSound = true;
+
+        public boolean downedDamageAppliesKnockback = true;
+
         public boolean blockHealingWhileDowned = true;
 
         public boolean blockEatingWhileDowned = true;

@@ -18,6 +18,8 @@ public final class SecondWindConfig {
     public static final ConfigValue<Boolean> DOWNED_DAMAGE_REDUCES_TIMER = bind("secondWind.downedDamageReducesTimer", Boolean.class);
     public static final ConfigValue<Integer> DOWNED_DAMAGE_COOLDOWN_TICKS = bind("secondWind.downedDamageCooldownTicks", Integer.class);
     public static final ConfigValue<Boolean> DOWNED_DAMAGE_REGISTERS = bind("secondWind.downedDamageRegisters", Boolean.class);
+    public static final ConfigValue<Boolean> DOWNED_DAMAGE_PLAYS_HIT_SOUND = bind("secondWind.downedDamagePlaysHitSound", Boolean.class);
+    public static final ConfigValue<Boolean> DOWNED_DAMAGE_APPLIES_KNOCKBACK = bind("secondWind.downedDamageAppliesKnockback", Boolean.class);
     public static final ConfigValue<Boolean> BLOCK_HEALING_WHILE_DOWNED = bind("secondWind.blockHealingWhileDowned", Boolean.class);
     public static final ConfigValue<Boolean> BLOCK_EATING_WHILE_DOWNED = bind("secondWind.blockEatingWhileDowned", Boolean.class);
     public static final ConfigValue<Integer> REVIVE_HEALTH_HALF_HEARTS = bind("secondWind.reviveHealthHalfHearts", Integer.class);

@@ -112,12 +112,16 @@ public final class SecondWindServerEvents {
         }
 
         if (SecondWindService.isDowned(player)) {
-            boolean timerExpired = false;
+            SecondWindService.DownedDamageTimerResult timerResult = SecondWindService.DownedDamageTimerResult.NONE;
             if (SecondWindConfig.DOWNED_DAMAGE_REDUCES_TIMER.get()) {
-                timerExpired = SecondWindService.applyDownedDamageToTimer(player, source, amount);
+                timerResult = SecondWindService.applyDownedDamageToTimer(player, source, amount);
             }
 
-            if (timerExpired || !SecondWindConfig.DOWNED_DAMAGE_REGISTERS.get()) {
+            boolean damageRegisters = SecondWindConfig.DOWNED_DAMAGE_REGISTERS.get();
+            if (timerResult.timerExpired() || !damageRegisters) {
+                if (timerResult.timerReduced() && !timerResult.timerExpired() && !damageRegisters) {
+                    SecondWindService.applyCanceledDownedDamageFeedback(player, source);
+                }
                 return false;
             }
         }

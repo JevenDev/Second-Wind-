@@ -9,6 +9,7 @@ import com.jvn.secondwind.util.SecondWindEntityRules;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.DustColorTransitionOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -17,7 +18,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 public final class SecondWindService {
@@ -31,6 +34,7 @@ public final class SecondWindService {
     private static final int PLAYER_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
     private static final int KILL_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
     private static final int ADMIN_REVIVE_ANNOUNCEMENT_VARIANTS = 2;
+    private static final double DOWNED_DAMAGE_KNOCKBACK_STRENGTH = 0.4D;
     private static final Vector3f REVIVE_PARTICLE_PURPLE = new Vector3f(0.73F, 0.42F, 0.98F);
     private static final Vector3f REVIVE_PARTICLE_WHITE = new Vector3f(0.98F, 0.96F, 1.0F);
 
@@ -357,21 +361,21 @@ public final class SecondWindService {
         state.setPendingUnsafeExitCooldown(true);
     }
 
-    public static boolean applyDownedDamageToTimer(ServerPlayer player, float damageAmount) {
+    public static DownedDamageTimerResult applyDownedDamageToTimer(ServerPlayer player, float damageAmount) {
         return applyDownedDamageToTimer(player, null, damageAmount);
     }
 
-    public static boolean applyDownedDamageToTimer(ServerPlayer player, DamageSource damageSource, float damageAmount) {
+    public static DownedDamageTimerResult applyDownedDamageToTimer(ServerPlayer player, DamageSource damageSource, float damageAmount) {
         SecondWindPlayerState state = getState(player);
         if (!state.isDowned() || damageAmount <= 0.0F) {
-            return false;
+            return DownedDamageTimerResult.NONE;
         }
 
         int cooldownTicks = SecondWindConfig.DOWNED_DAMAGE_COOLDOWN_TICKS.get();
         long gameTime = player.serverLevel().getGameTime();
         if (cooldownTicks > 0 && state.getLastDownedDamageGameTime() > 0L
                 && gameTime - state.getLastDownedDamageGameTime() < cooldownTicks) {
-            return false;
+            return DownedDamageTimerResult.NONE;
         }
 
         int previousTicksRemaining = state.getDownedTicksRemaining();
@@ -388,11 +392,60 @@ public final class SecondWindService {
                         .ifPresent(SecondWindCriteria::triggerFinishHim);
             }
             failAndKill(player, FailureReason.TIMER_EXPIRED);
-            return true;
+            return DownedDamageTimerResult.EXPIRED;
         }
 
         SecondWindNetworking.syncToPlayer(player, false, damageTicksLost);
-        return false;
+        return DownedDamageTimerResult.REDUCED;
+    }
+
+    public static void applyCanceledDownedDamageFeedback(ServerPlayer player, DamageSource damageSource) {
+        if (SecondWindConfig.ENABLE_SOUNDS.get() && SecondWindConfig.DOWNED_DAMAGE_PLAYS_HIT_SOUND.get()) {
+            player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.PLAYER_HURT, SoundSource.PLAYERS, 0.8F, 1.0F);
+        }
+
+        if (SecondWindConfig.DOWNED_DAMAGE_APPLIES_KNOCKBACK.get()) {
+            applyCanceledDownedDamageKnockback(player, damageSource);
+        }
+    }
+
+    private static void applyCanceledDownedDamageKnockback(ServerPlayer player, DamageSource damageSource) {
+        Vec3 direction = downedDamageKnockbackDirection(player, damageSource);
+        double horizontalDistance = Math.sqrt(direction.x * direction.x + direction.z * direction.z);
+        if (horizontalDistance <= 1.0E-7D) {
+            return;
+        }
+
+        Vec3 movement = player.getDeltaMovement();
+        double x = movement.x * 0.5D - direction.x / horizontalDistance * DOWNED_DAMAGE_KNOCKBACK_STRENGTH;
+        double y = player.onGround()
+                ? Math.min(0.4D, movement.y * 0.5D + DOWNED_DAMAGE_KNOCKBACK_STRENGTH)
+                : movement.y;
+        double z = movement.z * 0.5D - direction.z / horizontalDistance * DOWNED_DAMAGE_KNOCKBACK_STRENGTH;
+        player.setDeltaMovement(x, y, z);
+        player.hasImpulse = true;
+        player.connection.send(new ClientboundSetEntityMotionPacket(player));
+    }
+
+    private static Vec3 downedDamageKnockbackDirection(ServerPlayer player, DamageSource damageSource) {
+        Vec3 sourcePosition = damageSource.getSourcePosition();
+        if (sourcePosition != null) {
+            return sourcePosition.subtract(player.position());
+        }
+
+        Entity sourceEntity = damageSource.getEntity();
+        if (sourceEntity != null) {
+            return sourceEntity.position().subtract(player.position());
+        }
+
+        Vec3 lookAngle = player.getLookAngle();
+        return new Vec3(lookAngle.x, 0.0D, lookAngle.z);
+    }
+
+    public record DownedDamageTimerResult(boolean timerReduced, boolean timerExpired) {
+        public static final DownedDamageTimerResult NONE = new DownedDamageTimerResult(false, false);
+        public static final DownedDamageTimerResult REDUCED = new DownedDamageTimerResult(true, false);
+        public static final DownedDamageTimerResult EXPIRED = new DownedDamageTimerResult(true, true);
     }
 
     private static long currentMcDay(ServerPlayer player) {
