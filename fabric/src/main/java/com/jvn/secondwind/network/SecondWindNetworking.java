@@ -56,6 +56,7 @@ public final class SecondWindNetworking {
                 state.getDownedMaxTicks(),
                 Math.max(0, damageTicksLost),
                 state.isDowned(),
+                SecondWindConfig.FORCE_CRAWLING_POSE.get(),
                 state.getReviveChannelProgress(),
                 SecondWindService.isBeingRevived(player),
                 cooldownSeconds,

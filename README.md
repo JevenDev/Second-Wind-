@@ -268,6 +268,7 @@ Notable defaults:
 | `downedTimerSeconds`        | `10`    |
 | `minimumDownedTimerSeconds` | `3`     |
 | `timerPenaltyPerDown`       | `2`     |
+| `forceCrawlingPose`         | `true`  |
 | `blockHealingWhileDowned`   | `true`  |
 | `blockEatingWhileDowned`    | `true`  |
 | `cooldownMode`              | `TIMED` |

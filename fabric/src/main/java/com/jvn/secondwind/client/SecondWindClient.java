@@ -87,7 +87,7 @@ public final class SecondWindClient implements ClientModInitializer {
     }
 
     private static void syncLocalDownedPose(Minecraft minecraft) {
-        if (ClientSecondWindState.isDowned()) {
+        if (ClientSecondWindState.isDowned() && ClientSecondWindState.forceCrawlingPose()) {
             minecraft.player.setPose(Pose.SWIMMING);
             localDownedPoseApplied = true;
             return;

@@ -18,7 +18,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 public final class SecondWindNetworking {
-    private static final String NETWORK_VERSION = "5";
+    private static final String NETWORK_VERSION = "6";
 
     private SecondWindNetworking() {
     }
@@ -56,6 +56,7 @@ public final class SecondWindNetworking {
                 state.getDownedMaxTicks(),
                 Math.max(0, damageTicksLost),
                 state.isDowned(),
+                SecondWindConfig.FORCE_CRAWLING_POSE.get(),
                 state.getReviveChannelProgress(),
                 SecondWindService.isBeingRevived(player),
                 cooldownSeconds,

@@ -12,6 +12,7 @@ public record ClientboundSecondWindStatePayload(
         int maxTicks,
         int damageTicksLost,
         boolean giveUpAvailable,
+        boolean forceCrawlingPose,
         float reviveProgress,
         boolean timerPaused,
         int cooldownSeconds,
@@ -28,6 +29,7 @@ public record ClientboundSecondWindStatePayload(
         buffer.writeVarInt(payload.maxTicks);
         buffer.writeVarInt(payload.damageTicksLost);
         buffer.writeBoolean(payload.giveUpAvailable);
+        buffer.writeBoolean(payload.forceCrawlingPose);
         buffer.writeFloat(payload.reviveProgress);
         buffer.writeBoolean(payload.timerPaused);
         buffer.writeVarInt(payload.cooldownSeconds);
@@ -44,6 +46,7 @@ public record ClientboundSecondWindStatePayload(
                 buffer.readVarInt(),
                 buffer.readVarInt(),
                 buffer.readVarInt(),
+                buffer.readBoolean(),
                 buffer.readBoolean(),
                 buffer.readFloat(),
                 buffer.readBoolean(),

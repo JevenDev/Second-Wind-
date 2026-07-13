@@ -39,6 +39,8 @@ public final class SecondWindConfigModel {
         @RangeConstraint(min = 0, max = 6)
         public int downedSlownessLevel = 3;
 
+        public boolean forceCrawlingPose = true;
+
         public boolean downedDamageReducesTimer = true;
 
         @RangeConstraint(min = 0, max = 100)

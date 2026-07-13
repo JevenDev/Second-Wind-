@@ -15,6 +15,7 @@ public final class SecondWindConfig {
     public static final ConfigValue<Integer> MINIMUM_DOWNED_TIMER_SECONDS = bind("secondWind.minimumDownedTimerSeconds", Integer.class);
     public static final ConfigValue<Integer> TIMER_PENALTY_PER_DOWN = bind("secondWind.timerPenaltyPerDown", Integer.class);
     public static final ConfigValue<Integer> DOWNED_SLOWNESS_LEVEL = bind("secondWind.downedSlownessLevel", Integer.class);
+    public static final ConfigValue<Boolean> FORCE_CRAWLING_POSE = bind("secondWind.forceCrawlingPose", Boolean.class);
     public static final ConfigValue<Boolean> DOWNED_DAMAGE_REDUCES_TIMER = bind("secondWind.downedDamageReducesTimer", Boolean.class);
     public static final ConfigValue<Integer> DOWNED_DAMAGE_COOLDOWN_TICKS = bind("secondWind.downedDamageCooldownTicks", Integer.class);
     public static final ConfigValue<Boolean> DOWNED_DAMAGE_REGISTERS = bind("secondWind.downedDamageRegisters", Boolean.class);

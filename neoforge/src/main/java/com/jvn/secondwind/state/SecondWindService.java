@@ -559,7 +559,9 @@ public final class SecondWindService {
                     false));
         }
 
-        player.setForcedPose(Pose.SWIMMING);
+        if (SecondWindConfig.FORCE_CRAWLING_POSE.get()) {
+            player.setForcedPose(Pose.SWIMMING);
+        }
         player.setSprinting(false);
         player.fallDistance = 0.0F;
         if (player.getAbilities().flying) {
@@ -573,7 +575,9 @@ public final class SecondWindService {
 
     private static void clearDownedMobilityEffects(ServerPlayer player) {
         player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
-        player.setForcedPose(null);
+        if (SecondWindConfig.FORCE_CRAWLING_POSE.get()) {
+            player.setForcedPose(null);
+        }
         player.setSprinting(false);
     }
 

@@ -90,7 +90,7 @@ public final class SecondWindClient {
     }
 
     private static void syncLocalDownedPose(Minecraft minecraft) {
-        if (ClientSecondWindState.isDowned()) {
+        if (ClientSecondWindState.isDowned() && ClientSecondWindState.forceCrawlingPose()) {
             minecraft.player.setForcedPose(Pose.SWIMMING);
             localDownedPoseApplied = true;
             return;
