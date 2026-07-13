@@ -15,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
 import org.lwjgl.glfw.GLFW;
@@ -99,20 +100,20 @@ public final class SecondWindClient implements ClientModInitializer {
     }
 
     private static void updateReviveHoldOverlay(Minecraft minecraft) {
-        Player targetPlayer = currentReviveTarget(minecraft);
-        if (targetPlayer == null) {
+        LivingEntity targetEntity = currentReviveTarget(minecraft);
+        if (targetEntity == null) {
             releaseReviveHoldOverlay(true);
             tickReviveHoldFade();
             return;
         }
 
-        if (activeReviveTargetId != targetPlayer.getId()) {
+        if (activeReviveTargetId != targetEntity.getId()) {
             releaseReviveHoldOverlay(false);
-            activeReviveTargetId = targetPlayer.getId();
+            activeReviveTargetId = targetEntity.getId();
             reviveHeldTicks = 0;
         }
 
-        reviveRequiredTicks = reviveRequiredTicks();
+        reviveRequiredTicks = ClientTrackedDownedPlayers.reviveChannelTicks(targetEntity.getId());
         if (reviveRequiredTicks <= 0) {
             clearReviveHoldOverlay();
             return;
@@ -120,28 +121,24 @@ public final class SecondWindClient implements ClientModInitializer {
 
         reviveHeldTicks = Mth.clamp(reviveHeldTicks + 1, 0, reviveRequiredTicks);
         reviveDisplayHeldTicks = reviveHeldTicks;
-        reviveDisplayTargetName = targetPlayer.getName().getString();
+        reviveDisplayTargetName = targetEntity.getName().getString();
         reviveFadeTicks = 0;
-        SecondWindNetworking.sendReviveHoldRequest(targetPlayer.getId());
+        SecondWindNetworking.sendReviveHoldRequest(targetEntity.getId());
     }
 
-    private static Player currentReviveTarget(Minecraft minecraft) {
+    private static LivingEntity currentReviveTarget(Minecraft minecraft) {
         if (minecraft.screen != null
-                || !SecondWindConfig.MULTIPLAYER_REVIVE.get()
                 || !minecraft.options.keyUse.isDown()
                 || !(minecraft.hitResult instanceof EntityHitResult entityHitResult)
-                || !(entityHitResult.getEntity() instanceof Player targetPlayer)
-                || targetPlayer == minecraft.player
-                || !ClientTrackedDownedPlayers.isDowned(targetPlayer.getId())) {
+                || !(entityHitResult.getEntity() instanceof LivingEntity targetEntity)
+                || targetEntity == minecraft.player
+                || !ClientTrackedDownedPlayers.isDowned(targetEntity.getId())
+                || !ClientTrackedDownedPlayers.reviveEnabled(targetEntity.getId())) {
             return null;
         }
 
-        double maxDistance = SecondWindConfig.REVIVE_DISTANCE.get();
-        return minecraft.player.distanceToSqr(targetPlayer) <= maxDistance * maxDistance ? targetPlayer : null;
-    }
-
-    private static int reviveRequiredTicks() {
-        return (int) Math.ceil(SecondWindConfig.REVIVE_CHANNEL_SECONDS.get() * 20.0D);
+        double maxDistance = ClientTrackedDownedPlayers.reviveDistance(targetEntity.getId());
+        return minecraft.player.distanceToSqr(targetEntity) <= maxDistance * maxDistance ? targetEntity : null;
     }
 
     private static void releaseReviveHoldOverlay(boolean fade) {

@@ -129,6 +129,49 @@ Repeated downs become more dangerous.
 
 Every successful downed state can shorten the next survival window until the penalty resets, discouraging reckless play during extended fights.
 
+### Data-Driven Entities
+
+Datapacks can opt non-player living entities into Second Wind. Definitions live under
+`data/<namespace>/secondwind/entity_behaviors/` and use `secondwind:entity_behavior/v1`.
+Second Wind does not enable any vanilla mob by default.
+
+```json
+{
+  "schema": "secondwind:entity_behavior/v1",
+  "target": "minecraft:wolf",
+  "priority": 0,
+  "lifecycle": { "type": "managed" },
+  "downed": {
+    "timer_ticks": 240,
+    "minimum_timer_ticks": 60,
+    "penalty_per_down_ticks": 40,
+    "damage_mode": "reduce_timer",
+    "disable_ai": true,
+    "block_healing": true
+  },
+  "revive": {
+    "enabled": true,
+    "channel_ticks": 40,
+    "distance": 2.5,
+    "health": 6.0,
+    "cooldown_ticks": 6000
+  },
+  "presentation": {
+    "show_timer": true,
+    "announce": false,
+    "poses": ["secondwind:crawl"]
+  }
+}
+```
+
+`target` accepts an entity ID or an entity-type tag prefixed with `#`. Higher-priority definitions
+win; exact entity targets win equal-priority ties over tags. Managed entities keep their remaining
+timer while unloaded and restore their captured AI, pickup, and pose state when revived.
+
+Compatibility mods can instead declare an `external` lifecycle with an adapter ID. The owning mod
+then controls downing and recovery while Second Wind supplies tracking and player revive channels;
+external entities never receive a Second Wind bleedout timer.
+
 Servers can configure:
 
 - Minimum timer limits

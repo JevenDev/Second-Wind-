@@ -16,6 +16,11 @@ public final class SecondWindData {
                     .copyOnDeath()
                     .build());
 
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<SecondWindEntityState>> ENTITY_STATE =
+            ATTACHMENT_TYPES.register("entity_state", () -> AttachmentType
+                    .serializable(SecondWindEntityState::new)
+                    .build());
+
     private SecondWindData() {
     }
 }

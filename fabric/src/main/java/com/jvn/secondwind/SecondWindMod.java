@@ -7,6 +7,7 @@ import com.jvn.secondwind.event.SecondWindCommands;
 import com.jvn.secondwind.event.SecondWindServerEvents;
 import com.jvn.secondwind.item.SecondWindItems;
 import com.jvn.secondwind.network.SecondWindNetworking;
+import com.jvn.secondwind.state.SecondWindEntityService;
 import net.fabricmc.api.ModInitializer;
 
 public final class SecondWindMod implements ModInitializer {
@@ -16,6 +17,7 @@ public final class SecondWindMod implements ModInitializer {
     @Override
     public void onInitialize() {
         SecondWindCommon.init();
+        SecondWindEntityService.init();
         SecondWindConfig.init();
         SecondWindItems.register();
         SecondWindCriteria.register();

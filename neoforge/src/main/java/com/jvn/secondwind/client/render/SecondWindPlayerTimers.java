@@ -18,6 +18,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -63,11 +64,11 @@ public final class SecondWindPlayerTimers {
     @SubscribeEvent
     public static void onRenderNameTag(RenderNameTagEvent event) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.options.hideGui || !(event.getEntity() instanceof Player player)) {
+        if (minecraft.player == null || minecraft.options.hideGui || !(event.getEntity() instanceof LivingEntity player)) {
             return;
         }
 
-        if (!ClientTrackedDownedPlayers.isDowned(player.getId())) {
+        if (!ClientTrackedDownedPlayers.isDowned(player.getId()) || !ClientTrackedDownedPlayers.timerVisible(player.getId())) {
             return;
         }
 
@@ -92,7 +93,7 @@ public final class SecondWindPlayerTimers {
             PoseStack poseStack,
             MultiBufferSource bufferSource,
             Minecraft minecraft,
-            Player player,
+            LivingEntity player,
             Component nameTagContent,
             Vec3 nameTagOffset,
             int packedLight) {

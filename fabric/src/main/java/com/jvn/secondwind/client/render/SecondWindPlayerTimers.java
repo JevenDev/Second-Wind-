@@ -18,6 +18,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -40,8 +42,10 @@ public final class SecondWindPlayerTimers {
             return;
         }
 
-        for (Player player : minecraft.level.players()) {
-            if (!ClientTrackedDownedPlayers.isDowned(player.getId())) {
+        for (Entity candidate : minecraft.level.entitiesForRendering()) {
+            if (!(candidate instanceof LivingEntity player)
+                    || !ClientTrackedDownedPlayers.isDowned(player.getId())
+                    || !ClientTrackedDownedPlayers.timerVisible(player.getId())) {
                 continue;
             }
 
@@ -57,7 +61,7 @@ public final class SecondWindPlayerTimers {
     private static void renderTimer(
             WorldRenderContext context,
             Minecraft minecraft,
-            Player player,
+            LivingEntity player,
             Component nameTagContent,
             Vec3 nameTagOffset) {
         float displayedTicksRemaining = ClientTrackedDownedPlayers.displayedTicksRemaining(player.getId());

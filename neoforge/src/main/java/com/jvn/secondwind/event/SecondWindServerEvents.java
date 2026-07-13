@@ -8,6 +8,8 @@ import com.jvn.secondwind.state.FailureReason;
 import com.jvn.secondwind.state.ReviveReason;
 import com.jvn.secondwind.state.SecondWindPlayerState;
 import com.jvn.secondwind.state.SecondWindService;
+import com.jvn.secondwind.state.SecondWindEntityService;
+import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.util.SecondWindEntityRules;
 import java.util.Optional;
 import net.minecraft.network.chat.Component;
@@ -15,6 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -25,6 +28,9 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerWakeUpEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 
 @EventBusSubscriber(modid = SecondWindMod.MOD_ID)
 public final class SecondWindServerEvents {
@@ -34,6 +40,10 @@ public final class SecondWindServerEvents {
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
+            if (SecondWindEntityService.tryDownFromDeath(event.getEntity(), event.getSource())) {
+                event.setCanceled(true);
+                return;
+            }
             handleKillToRevive(event);
             return;
         }
@@ -134,14 +144,21 @@ public final class SecondWindServerEvents {
     }
 
     @SubscribeEvent
+    public static void onEntityTick(EntityTickEvent.Post event) {
+        if (event.getEntity() instanceof LivingEntity living && !(living instanceof ServerPlayer)) {
+            SecondWindEntityService.tick(living);
+        }
+    }
+
+    @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (!(event.getEntity() instanceof ServerPlayer reviver)
-                || !(event.getTarget() instanceof ServerPlayer downedPlayer)
+                || !(event.getTarget() instanceof LivingEntity downedEntity)
                 || event.getLevel().isClientSide()) {
             return;
         }
 
-        if (SecondWindService.canPlayerRevive(reviver, downedPlayer)) {
+        if (SecondWindEntityService.canPlayerRevive(reviver, downedEntity)) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.SUCCESS);
         }
@@ -150,6 +167,10 @@ public final class SecondWindServerEvents {
     @SubscribeEvent
     public static void onIncomingDamage(LivingIncomingDamageEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
+            if (SecondWindEntityService.handleIncomingDamage(event.getEntity(), event.getSource(), event.getAmount())
+                    == SecondWindEntityService.DamageResult.CANCEL) {
+                event.setCanceled(true);
+            }
             return;
         }
 
@@ -170,6 +191,7 @@ public final class SecondWindServerEvents {
 
         if (SecondWindConfig.REVIVE_INTERRUPT_ON_DAMAGE.get()) {
             SecondWindService.interruptReviveChannelsFor(player);
+            SecondWindEntityService.interruptReviveChannelsFor(player);
         }
     }
 
@@ -178,6 +200,8 @@ public final class SecondWindServerEvents {
         if (SecondWindConfig.BLOCK_HEALING_WHILE_DOWNED.get()
                 && event.getEntity() instanceof ServerPlayer player
                 && SecondWindService.isDowned(player)) {
+            event.setCanceled(true);
+        } else if (SecondWindEntityService.shouldBlockHealing(event.getEntity())) {
             event.setCanceled(true);
         }
     }
@@ -200,6 +224,29 @@ public final class SecondWindServerEvents {
         if (event.getEntity() instanceof ServerPlayer player && !event.wakeImmediately()) {
             SecondWindService.resetCooldownForSleep(player);
             SecondWindNetworking.syncToPlayer(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityJoin(EntityJoinLevelEvent event) {
+        if (event.getEntity() instanceof LivingEntity living && !(living instanceof ServerPlayer) && !event.getLevel().isClientSide()) {
+            SecondWindEntityService.onLoaded(living);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityLeave(EntityLeaveLevelEvent event) {
+        if (event.getEntity() instanceof LivingEntity living && !(living instanceof ServerPlayer) && !event.getLevel().isClientSide()) {
+            SecondWindEntityService.onUnloaded(living);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (event.getEntity() instanceof ServerPlayer player && event.getTarget() instanceof LivingEntity living
+                && !(living instanceof ServerPlayer)) {
+            SecondWindEntityService.notifyExternalStateChanged(living);
+            SecondWindNetworking.sendTrackedEntity(player, living);
         }
     }
 }

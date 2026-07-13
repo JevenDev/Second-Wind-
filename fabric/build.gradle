@@ -38,7 +38,10 @@ dependencies {
     include "io.wispforest:owo-sentinel:${rootProject.owo_fabric_version}"
 
     if (rootProject.enable_toucanlib.toBoolean()) {
-        modImplementation "curse.maven:toucanlib-${rootProject.toucanlib_curse_project_id}:${rootProject.toucanlib_curse_file_id}"
+        def toucanlibDependency = rootProject.useLocalToucanLib.toBoolean()
+                ? "com.jvn.toucanlib:toucanlib-fabric-${rootProject.minecraft_version}:${rootProject.toucanlib_version}"
+                : "maven.modrinth:toucan:${rootProject.toucanlib_version}-fabric"
+        modImplementation toucanlibDependency
     }
 
     common(project(path: ':common', configuration: 'namedElements')) {

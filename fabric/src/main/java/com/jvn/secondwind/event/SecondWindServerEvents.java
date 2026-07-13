@@ -7,12 +7,15 @@ import com.jvn.secondwind.state.FailureReason;
 import com.jvn.secondwind.state.ReviveReason;
 import com.jvn.secondwind.state.SecondWindPlayerState;
 import com.jvn.secondwind.state.SecondWindService;
+import com.jvn.secondwind.state.SecondWindEntityService;
 import com.jvn.secondwind.util.SecondWindEntityRules;
 import java.util.Optional;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,11 +55,24 @@ public final class SecondWindServerEvents {
             SecondWindService.enforceDownedMovement(player);
             SecondWindService.tickDowned(player);
         }));
+        ServerTickEvents.END_SERVER_TICK.register(server -> SecondWindEntityService.tickActive());
+        ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
+            if (entity instanceof LivingEntity living && !(living instanceof ServerPlayer)) SecondWindEntityService.onLoaded(living);
+        });
+        ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {
+            if (entity instanceof LivingEntity living && !(living instanceof ServerPlayer)) SecondWindEntityService.onUnloaded(living);
+        });
+        EntityTrackingEvents.START_TRACKING.register((entity, player) -> {
+            if (entity instanceof LivingEntity living && !(living instanceof ServerPlayer)) {
+                SecondWindEntityService.notifyExternalStateChanged(living);
+                SecondWindNetworking.sendTrackedEntity(player, living);
+            }
+        });
         UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
             if (!level.isClientSide()
                     && player instanceof ServerPlayer reviver
-                    && entity instanceof ServerPlayer downedPlayer
-                    && SecondWindService.canPlayerRevive(reviver, downedPlayer)) {
+                    && entity instanceof LivingEntity downedEntity
+                    && SecondWindEntityService.canPlayerRevive(reviver, downedEntity)) {
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
@@ -84,7 +100,7 @@ public final class SecondWindServerEvents {
 
     private static boolean allowDeath(LivingEntity entity, DamageSource source, float amount) {
         if (!(entity instanceof ServerPlayer player)) {
-            return true;
+            return !SecondWindEntityService.tryDownFromDeath(entity, source);
         }
 
         SecondWindPlayerState state = SecondWindService.getState(player);
@@ -108,7 +124,7 @@ public final class SecondWindServerEvents {
 
     private static boolean allowDamage(LivingEntity entity, DamageSource source, float amount) {
         if (!(entity instanceof ServerPlayer player)) {
-            return true;
+            return SecondWindEntityService.handleIncomingDamage(entity, source, amount) != SecondWindEntityService.DamageResult.CANCEL;
         }
 
         if (SecondWindService.isDowned(player)) {
@@ -128,6 +144,7 @@ public final class SecondWindServerEvents {
 
         if (SecondWindConfig.REVIVE_INTERRUPT_ON_DAMAGE.get()) {
             SecondWindService.interruptReviveChannelsFor(player);
+            SecondWindEntityService.interruptReviveChannelsFor(player);
         }
         return true;
     }

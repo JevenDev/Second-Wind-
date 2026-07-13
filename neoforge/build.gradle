@@ -39,7 +39,10 @@ dependencies {
     forgeRuntimeLibrary "io.wispforest.endec:jankson:0.1.3.1"
 
     if (rootProject.enable_toucanlib.toBoolean()) {
-        modImplementation "curse.maven:toucanlib-${rootProject.toucanlib_curse_project_id}:${rootProject.toucanlib_curse_file_id}"
+        def toucanlibDependency = rootProject.useLocalToucanLib.toBoolean()
+                ? "com.jvn.toucanlib:toucanlib-neoforge-${rootProject.minecraft_version}:${rootProject.toucanlib_version}"
+                : "maven.modrinth:toucan:${rootProject.toucanlib_version}-neoforge"
+        modImplementation toucanlibDependency
     }
 
     common(project(path: ':common', configuration: 'namedElements')) {

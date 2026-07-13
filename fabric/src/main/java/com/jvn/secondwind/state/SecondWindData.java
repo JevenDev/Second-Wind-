@@ -12,6 +12,12 @@ public final class SecondWindData {
                             .initializer(SecondWindPlayerState::new)
                             .persistent(SecondWindPlayerState.CODEC));
 
+    public static final AttachmentType<SecondWindEntityState> ENTITY_STATE =
+            AttachmentRegistry.create(ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "entity_state"),
+                    builder -> builder
+                            .initializer(SecondWindEntityState::new)
+                            .persistent(SecondWindEntityState.CODEC));
+
     private SecondWindData() {
     }
 }

@@ -4,13 +4,21 @@ import com.jvn.secondwind.SecondWindMod;
 import com.jvn.secondwind.state.FailureReason;
 import com.jvn.secondwind.state.SecondWindPlayerState;
 import com.jvn.secondwind.state.SecondWindService;
+import com.jvn.secondwind.state.SecondWindEntityService;
+import com.jvn.secondwind.state.SecondWindEntityState;
+import com.jvn.secondwind.api.ResolvedEntityPolicy;
+import com.jvn.secondwind.config.SecondWindConfig;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.LivingEntity;
 import com.jvn.toucanlib.neoforge.network.ToucanNetwork;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 public final class SecondWindNetworking {
-    private static final String NETWORK_VERSION = "4";
+    private static final String NETWORK_VERSION = "5";
 
     private SecondWindNetworking() {
     }
@@ -42,7 +50,7 @@ public final class SecondWindNetworking {
     public static void syncToPlayer(ServerPlayer player, boolean showReviveFlash, int damageTicksLost) {
         SecondWindPlayerState state = SecondWindService.getState(player);
         int cooldownSeconds = SecondWindService.getCooldownRemainingSeconds(player);
-        PacketDistributor.sendToPlayer(player, new ClientboundSecondWindStatePayload(
+        safeSendToPlayer(player, new ClientboundSecondWindStatePayload(
                 state.isDowned(),
                 state.getDownedTicksRemaining(),
                 state.getDownedMaxTicks(),
@@ -69,14 +77,56 @@ public final class SecondWindNetworking {
         ClientboundTrackedDownedPlayerPayload payload = new ClientboundTrackedDownedPlayerPayload(
                 player.getId(),
                 state.isDowned(),
+                true,
                 state.getDownedTicksRemaining(),
                 state.getDownedMaxTicks(),
-                SecondWindService.isBeingRevived(player));
+                SecondWindService.isBeingRevived(player),
+                SecondWindConfig.MULTIPLAYER_REVIVE.get(),
+                (int) Math.ceil(SecondWindConfig.REVIVE_CHANNEL_SECONDS.get() * 20.0D),
+                SecondWindConfig.REVIVE_DISTANCE.get(),
+                ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "crawl"));
 
         for (ServerPlayer other : player.server.getPlayerList().getPlayers()) {
             if (other.serverLevel() == player.serverLevel()) {
-                PacketDistributor.sendToPlayer(other, payload);
+                safeSendToPlayer(other, payload);
             }
+        }
+    }
+
+    public static void syncTrackedEntity(LivingEntity entity) {
+        if (entity instanceof ServerPlayer player) {
+            syncToPlayer(player);
+            return;
+        }
+        SecondWindEntityState state = SecondWindEntityService.getState(entity);
+        ResolvedEntityPolicy policy = state.policy();
+        ClientboundTrackedDownedPlayerPayload payload = new ClientboundTrackedDownedPlayerPayload(
+                entity.getId(), state.isDowned(), policy != null && policy.showTimer(),
+                state.ticksRemaining(), state.maxTicks(), state.reviveChannelReviver().isPresent(),
+                policy != null && policy.reviveEnabled(),
+                policy == null ? 0 : policy.reviveChannelTicks(),
+                policy == null ? 0.0D : policy.reviveDistance(),
+                policy == null ? ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "crawl") : policy.pose());
+        for (ServerPlayer player : entity.level().getServer().getPlayerList().getPlayers()) {
+            if (player.serverLevel() == entity.level()) {
+                safeSendToPlayer(player, payload);
+            }
+        }
+    }
+
+    public static void sendTrackedEntity(ServerPlayer player, LivingEntity entity) {
+        SecondWindEntityState state = SecondWindEntityService.getState(entity);
+        ResolvedEntityPolicy policy = state.policy();
+        safeSendToPlayer(player, new ClientboundTrackedDownedPlayerPayload(
+                entity.getId(), state.isDowned(), policy != null && policy.showTimer(), state.ticksRemaining(), state.maxTicks(),
+                state.reviveChannelReviver().isPresent(), policy != null && policy.reviveEnabled(), policy == null ? 0 : policy.reviveChannelTicks(),
+                policy == null ? 0.0D : policy.reviveDistance(),
+                policy == null ? ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "crawl") : policy.pose()));
+    }
+
+    private static void safeSendToPlayer(ServerPlayer player, CustomPacketPayload payload) {
+        if (NetworkRegistry.hasChannel(player.connection, payload.type().id())) {
+            PacketDistributor.sendToPlayer(player, payload);
         }
     }
 
@@ -98,8 +148,8 @@ public final class SecondWindNetworking {
 
     private static void handleReviveHold(ServerboundReviveHoldPayload payload, net.neoforged.neoforge.network.handling.IPayloadContext context) {
         ToucanNetwork.withServerPlayer(context, reviver -> {
-            if (reviver.serverLevel().getEntity(payload.targetEntityId()) instanceof ServerPlayer downedPlayer) {
-                SecondWindService.refreshReviveChannel(reviver, downedPlayer);
+            if (reviver.serverLevel().getEntity(payload.targetEntityId()) instanceof LivingEntity target) {
+                SecondWindEntityService.refreshReviveChannel(reviver, target);
             }
         });
     }

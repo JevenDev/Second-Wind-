@@ -10,6 +10,7 @@
   "message.secondwind.downed.4": "%1$s is down! Help them up!",
   "message.secondwind.downed.5": "%1$s is down! They can still be saved!",
   "message.secondwind.downed.6": "%1$s is down! Don't let them go down for the count!",
+  "message.secondwind.entity_downed": "%1$s was downed!",
   "message.secondwind.revived.player_revive.0": "%1$s is back up!",
   "message.secondwind.revived.player_revive.1": "%1$s got the pickup and is back in the fight!",
   "message.secondwind.revived.player_revive.2": "%1$s is back on their feet!",

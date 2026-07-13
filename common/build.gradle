@@ -18,8 +18,19 @@ dependencies {
     modApi "dev.architectury:architectury:${rootProject.architectury_version}"
 
     if (rootProject.enable_toucanlib.toBoolean()) {
-        modCompileOnly "curse.maven:toucanlib-${rootProject.toucanlib_curse_project_id}:${rootProject.toucanlib_curse_file_id}"
+        def toucanlibDependency = rootProject.useLocalToucanLib.toBoolean()
+                ? "com.jvn.toucanlib:toucanlib:${rootProject.toucanlib_version}"
+                : "maven.modrinth:toucan:${rootProject.toucanlib_version}-fabric"
+        modCompileOnly toucanlibDependency
     }
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
 }
 
 tasks.named('processResources', ProcessResources).configure {

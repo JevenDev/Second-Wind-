@@ -7,6 +7,7 @@ import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.item.SecondWindItems;
 import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.state.SecondWindData;
+import com.jvn.secondwind.state.SecondWindEntityService;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -19,6 +20,7 @@ public final class SecondWindMod {
 
     public SecondWindMod(IEventBus modEventBus, ModContainer modContainer) {
         SecondWindCommon.init();
+        SecondWindEntityService.init();
         SecondWindConfig.init();
         SecondWindCriteria.TRIGGER_TYPES.register(modEventBus);
         SecondWindData.ATTACHMENT_TYPES.register(modEventBus);
