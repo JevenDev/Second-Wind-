@@ -110,7 +110,7 @@ public final class SecondWindNetworking {
         return new ClientboundTrackedDownedPlayerPayload(entity.getId(), state.isDowned(), policy != null && policy.showTimer(),
                 state.ticksRemaining(), state.maxTicks(), state.reviveChannelReviver().isPresent(), policy != null && policy.reviveEnabled(),
                 policy == null ? 0 : policy.reviveChannelTicks(), policy == null ? 0.0D : policy.reviveDistance(),
-                policy == null ? ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "crawl") : policy.pose());
+                policy == null ? ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "sideways") : policy.pose());
     }
 
     public static void sendGiveUpRequest() {

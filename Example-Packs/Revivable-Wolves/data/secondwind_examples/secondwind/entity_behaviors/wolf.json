@@ -1,0 +1,40 @@
+{
+  "schema": "secondwind:entity_behavior/v1",
+  "target": "minecraft:wolf",
+  "conditions": {
+    "tamed": true
+  },
+  "priority": 0,
+  "lifecycle": {
+    "type": "managed"
+  },
+  "downed": {
+    "timer_ticks": 240,
+    "minimum_timer_ticks": 60,
+    "penalty_per_down_ticks": 40,
+    "damage_mode": "reduce_timer",
+    "damage_cooldown_ticks": 10,
+    "disable_ai": true,
+    "block_healing": true
+  },
+  "revive": {
+    "enabled": true,
+    "channel_ticks": 40,
+    "distance": 2.5,
+    "health": 6.0,
+    "regeneration_ticks": 60,
+    "invulnerability_ticks": 40,
+    "cooldown_ticks": 6000
+  },
+  "presentation": {
+    "show_timer": true,
+    "announce": true,
+    "downed_message": {
+      "translate": "message.secondwind_examples.wolf_downed",
+      "fallback": "%1$s needs help!"
+    },
+    "poses": [
+      "secondwind:sideways"
+    ]
+  }
+}

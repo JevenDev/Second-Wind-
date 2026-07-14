@@ -139,6 +139,7 @@ Second Wind does not enable any vanilla mob by default.
 {
   "schema": "secondwind:entity_behavior/v1",
   "target": "minecraft:wolf",
+  "conditions": { "tamed": true },
   "priority": 0,
   "lifecycle": { "type": "managed" },
   "downed": {
@@ -158,15 +159,26 @@ Second Wind does not enable any vanilla mob by default.
   },
   "presentation": {
     "show_timer": true,
-    "announce": false,
-    "poses": ["secondwind:crawl"]
+    "announce": true,
+    "downed_message": {
+      "translate": "message.example.wolf_downed",
+      "fallback": "%1$s needs help!"
+    },
+    "poses": ["secondwind:sideways"]
   }
 }
 ```
 
-`target` accepts an entity ID or an entity-type tag prefixed with `#`. Higher-priority definitions
+`target` accepts an entity ID or an entity-type tag prefixed with `#`. The optional
+`conditions.tamed` filter limits a definition to tamed or untamed tamable animals. Higher-priority definitions
 win; exact entity targets win equal-priority ties over tags. Managed entities keep their remaining
 timer while unloaded and restore their captured AI, pickup, and pose state when revived.
+
+Entity announcements follow the global chat-message and localization settings. `downed_message`
+accepts either a translation-key string or an object with `translate` and an optional `fallback`;
+the entity display name is supplied as `%1$s`. Presentation defaults to `secondwind:sideways`, while
+packs can select `secondwind:upright`. Client mods can register any other pose ID with
+`SecondWindClientApi.registerPoseRenderer` and apply a custom model transform.
 
 Compatibility mods can instead declare an `external` lifecycle with an adapter ID. The owning mod
 then controls downing and recovery while Second Wind supplies tracking and player revive channels;

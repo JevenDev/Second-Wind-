@@ -6,10 +6,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TamableAnimal;
 
 public record EntityBehaviorDefinition(
         ResourceLocation id,
         Target target,
+        Conditions conditions,
         int priority,
         Lifecycle lifecycle,
         Downed downed,
@@ -17,7 +19,7 @@ public record EntityBehaviorDefinition(
         Presentation presentation) {
 
     public boolean matches(LivingEntity entity) {
-        return target.matches(entity.getType());
+        return target.matches(entity.getType()) && conditions.matches(entity);
     }
 
     public Optional<ResourceLocation> selectPose(LivingEntity entity) {
@@ -32,6 +34,15 @@ public record EntityBehaviorDefinition(
 
         public boolean matches(EntityType<?> type) {
             return entityType != null ? EntityType.getKey(type).equals(entityType) : tag != null && type.is(tag);
+        }
+    }
+
+    public record Conditions(Boolean tamed) {
+        public boolean matches(LivingEntity entity) {
+            if (tamed == null) {
+                return true;
+            }
+            return entity instanceof TamableAnimal tamable && tamable.isTame() == tamed;
         }
     }
 
@@ -68,7 +79,10 @@ public record EntityBehaviorDefinition(
             Integer cooldownTicks) {
     }
 
-    public record Presentation(boolean showTimer, boolean announce, List<ResourceLocation> poses) {
+    public record DownedMessage(String translationKey, String fallback) {
+    }
+
+    public record Presentation(boolean showTimer, boolean announce, DownedMessage downedMessage, List<ResourceLocation> poses) {
         public Presentation {
             poses = List.copyOf(poses);
         }

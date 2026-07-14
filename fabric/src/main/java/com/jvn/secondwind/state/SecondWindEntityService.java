@@ -13,7 +13,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
@@ -56,8 +58,7 @@ public final class SecondWindEntityService {
         entity.setHealth(1.0F); entity.fallDistance = 0.0F; entity.stopUsingItem();
         if (entity.isPassenger()) entity.stopRiding();
         enforceManagedDowned(entity, state); ACTIVE.put(entity.getUUID(), entity); SecondWindNetworking.syncTrackedEntity(entity);
-        if (policy.announce() && entity.getServer() != null) entity.getServer().getPlayerList().broadcastSystemMessage(
-                Component.translatable("message.secondwind.entity_downed", entity.getDisplayName()), false);
+        announceEntityDowned(entity, policy);
         return true;
     }
 
@@ -146,8 +147,11 @@ public final class SecondWindEntityService {
         if (adapter == null) return;
         SecondWindEntityState state = getState(entity);
         if (adapter.isDowned(entity)) {
-            if (!state.isDowned() || state.policy() == null || state.policy().lifecycle() != EntityBehaviorDefinition.Lifecycle.Type.EXTERNAL) {
+            boolean newlyDowned = !state.isDowned() || state.policy() == null
+                    || state.policy().lifecycle() != EntityBehaviorDefinition.Lifecycle.Type.EXTERNAL;
+            if (newlyDowned) {
                 state.setPolicy(resolvePolicy(entity, definition)); state.setDowned(true); state.setTicksRemaining(0); state.setMaxTicks(0);
+                announceEntityDowned(entity, state.policy());
             }
             ACTIVE.put(entity.getUUID(), entity);
         } else if (state.isDowned() && state.policy() != null && state.policy().lifecycle() == EntityBehaviorDefinition.Lifecycle.Type.EXTERNAL) {
@@ -217,7 +221,6 @@ public final class SecondWindEntityService {
         ResolvedEntityPolicy policy = state.policy();
         if (policy != null && policy.blockHealing()) entity.setHealth(1.0F); else entity.setHealth(Math.max(1.0F, entity.getHealth()));
         entity.stopUsingItem(); entity.fallDistance = 0.0F;
-        entity.setPose(Pose.SWIMMING);
         if (entity instanceof Mob mob && policy != null && policy.disableAi()) { mob.getNavigation().stop(); mob.setTarget(null); mob.setNoAi(true); mob.setCanPickUpLoot(false); }
     }
 
@@ -232,7 +235,8 @@ public final class SecondWindEntityService {
         EntityBehaviorDefinition.Downed.DamageMode defaultDamage = SecondWindConfig.DOWNED_DAMAGE_REDUCES_TIMER.get()
                 ? (SecondWindConfig.DOWNED_DAMAGE_REGISTERS.get() ? EntityBehaviorDefinition.Downed.DamageMode.NORMAL_AND_REDUCE_TIMER : EntityBehaviorDefinition.Downed.DamageMode.REDUCE_TIMER)
                 : (SecondWindConfig.DOWNED_DAMAGE_REGISTERS.get() ? EntityBehaviorDefinition.Downed.DamageMode.NORMAL : EntityBehaviorDefinition.Downed.DamageMode.IGNORE);
-        ResourceLocation pose = definition.selectPose(entity).orElse(ResourceLocation.fromNamespaceAndPath("secondwind", "crawl"));
+        ResourceLocation pose = definition.selectPose(entity).orElse(ResourceLocation.fromNamespaceAndPath("secondwind", "sideways"));
+        EntityBehaviorDefinition.DownedMessage message = definition.presentation().downedMessage();
         return new ResolvedEntityPolicy(definition.id(), definition.lifecycle().type(), definition.lifecycle().adapter(),
                 value(downed.timerTicks(), SecondWindConfig.DOWNED_TIMER_SECONDS.get() * 20), value(downed.minimumTimerTicks(), SecondWindConfig.MINIMUM_DOWNED_TIMER_SECONDS.get() * 20),
                 value(downed.penaltyPerDownTicks(), SecondWindConfig.TIMER_PENALTY_PER_DOWN.get() * 20), downed.damageMode() == null ? defaultDamage : downed.damageMode(),
@@ -242,7 +246,17 @@ public final class SecondWindEntityService {
                 value(revive.health(), SecondWindConfig.REVIVE_HEALTH_HALF_HEARTS.get().floatValue()), value(revive.regenerationTicks(), SecondWindConfig.REVIVE_REGENERATION_SECONDS.get() * 20),
                 value(revive.invulnerabilityTicks(), SecondWindConfig.POST_REVIVE_INVULNERABILITY_SECONDS.get() * 20),
                 value(revive.cooldownTicks(), SecondWindConfig.COOLDOWN_MODE.get() == CooldownMode.NONE ? 0 : SecondWindConfig.COOLDOWN_DURATION_SECONDS.get() * 20),
-                definition.presentation().showTimer(), definition.presentation().announce(), pose);
+                definition.presentation().showTimer(), definition.presentation().announce(),
+                message.translationKey(), message.fallback(), pose);
+    }
+
+    private static void announceEntityDowned(LivingEntity entity, ResolvedEntityPolicy policy) {
+        if (policy == null || !policy.announce() || !SecondWindConfig.ENABLE_CHAT_MESSAGES.get() || entity.getServer() == null) return;
+        MutableComponent translated = Component.translatableWithFallback(
+                policy.downedMessageTranslationKey(), policy.downedMessageFallback(), entity.getDisplayName());
+        MutableComponent message = SecondWindConfig.LOCALIZE_CHAT_MESSAGES.get()
+                ? translated : Component.literal(translated.getString());
+        entity.getServer().getPlayerList().broadcastSystemMessage(message.withStyle(ChatFormatting.RED), false);
     }
 
     private static int value(Integer value, int fallback) { return value == null ? fallback : value; }

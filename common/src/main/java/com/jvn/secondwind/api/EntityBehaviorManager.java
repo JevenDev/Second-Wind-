@@ -119,6 +119,10 @@ public final class EntityBehaviorManager extends SimpleJsonResourceReloadListene
             throw new IllegalArgumentException("external lifecycle requires an adapter");
         }
 
+        JsonObject conditions = GsonHelper.getAsJsonObject(root, "conditions", new JsonObject());
+        EntityBehaviorDefinition.Conditions conditionDefinition = new EntityBehaviorDefinition.Conditions(
+                optionalBoolean(conditions, "tamed"));
+
         JsonObject downed = GsonHelper.getAsJsonObject(root, "downed", new JsonObject());
         EntityBehaviorDefinition.Downed downedDefinition = new EntityBehaviorDefinition.Downed(
                 optionalInt(downed, "timer_ticks", 1),
@@ -144,6 +148,7 @@ public final class EntityBehaviorManager extends SimpleJsonResourceReloadListene
                 optionalInt(revive, "cooldown_ticks", 0));
 
         JsonObject presentation = GsonHelper.getAsJsonObject(root, "presentation", new JsonObject());
+        EntityBehaviorDefinition.DownedMessage downedMessage = parseDownedMessage(presentation);
         List<ResourceLocation> poses = new ArrayList<>();
         if (presentation.has("poses")) {
             JsonArray poseArray = GsonHelper.getAsJsonArray(presentation, "poses");
@@ -152,20 +157,41 @@ public final class EntityBehaviorManager extends SimpleJsonResourceReloadListene
             }
         }
         if (poses.isEmpty()) {
-            poses.add(SecondWindCommon.id("crawl"));
+            poses.add(SecondWindCommon.id("sideways"));
         }
 
         return new EntityBehaviorDefinition(
                 id,
                 target,
+                conditionDefinition,
                 GsonHelper.getAsInt(root, "priority", 0),
                 new EntityBehaviorDefinition.Lifecycle(lifecycleType, adapter),
                 downedDefinition,
                 reviveDefinition,
                 new EntityBehaviorDefinition.Presentation(
                         GsonHelper.getAsBoolean(presentation, "show_timer", lifecycleType == EntityBehaviorDefinition.Lifecycle.Type.MANAGED),
-                        GsonHelper.getAsBoolean(presentation, "announce", false),
+                        GsonHelper.getAsBoolean(presentation, "announce", true),
+                        downedMessage,
                         poses));
+    }
+
+    private static EntityBehaviorDefinition.DownedMessage parseDownedMessage(JsonObject presentation) {
+        if (!presentation.has("downed_message")) {
+            return new EntityBehaviorDefinition.DownedMessage("message.secondwind.entity_downed", null);
+        }
+
+        JsonElement message = presentation.get("downed_message");
+        if (message.isJsonPrimitive() && message.getAsJsonPrimitive().isString()) {
+            return new EntityBehaviorDefinition.DownedMessage(message.getAsString(), null);
+        }
+        if (!message.isJsonObject()) {
+            throw new IllegalArgumentException("downed_message must be a translation key or an object");
+        }
+
+        JsonObject object = message.getAsJsonObject();
+        String translationKey = GsonHelper.getAsString(object, "translate");
+        String fallback = object.has("fallback") ? GsonHelper.getAsString(object, "fallback") : null;
+        return new EntityBehaviorDefinition.DownedMessage(translationKey, fallback);
     }
 
     private static Integer optionalInt(JsonObject json, String key, int minimum) {

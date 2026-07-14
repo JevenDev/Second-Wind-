@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "com.jvn.secondwind.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "client.LivingEntityRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

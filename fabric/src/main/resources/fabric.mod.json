@@ -25,6 +25,9 @@
       "${mod_package}.client.config.SecondWindModMenu"
     ]
   },
+  "mixins": [
+    "secondwind.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": ">=${fabric_api_version}",

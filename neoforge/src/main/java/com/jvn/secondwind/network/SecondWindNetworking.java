@@ -107,7 +107,7 @@ public final class SecondWindNetworking {
                 policy != null && policy.reviveEnabled(),
                 policy == null ? 0 : policy.reviveChannelTicks(),
                 policy == null ? 0.0D : policy.reviveDistance(),
-                policy == null ? ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "crawl") : policy.pose());
+                policy == null ? ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "sideways") : policy.pose());
         for (ServerPlayer player : entity.level().getServer().getPlayerList().getPlayers()) {
             if (player.serverLevel() == entity.level()) {
                 safeSendToPlayer(player, payload);
@@ -122,7 +122,7 @@ public final class SecondWindNetworking {
                 entity.getId(), state.isDowned(), policy != null && policy.showTimer(), state.ticksRemaining(), state.maxTicks(),
                 state.reviveChannelReviver().isPresent(), policy != null && policy.reviveEnabled(), policy == null ? 0 : policy.reviveChannelTicks(),
                 policy == null ? 0.0D : policy.reviveDistance(),
-                policy == null ? ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "crawl") : policy.pose()));
+                policy == null ? ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "sideways") : policy.pose()));
     }
 
     private static void safeSendToPlayer(ServerPlayer player, CustomPacketPayload payload) {

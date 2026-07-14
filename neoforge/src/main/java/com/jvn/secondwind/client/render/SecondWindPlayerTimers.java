@@ -6,8 +6,6 @@ import com.jvn.secondwind.client.hud.SecondWindHud;
 import com.jvn.toucanlib.util.ToucanResourceLocations;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import java.util.HashMap;
-import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
@@ -17,13 +15,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityAttachment;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.client.event.RenderNameTagEvent;
 import org.joml.Matrix4f;
 
@@ -33,32 +29,7 @@ public final class SecondWindPlayerTimers {
     private static final float LABEL_SCALE = 0.025F;
     private static final float ICON_SIZE = 10.0F;
     private static final float ICON_GAP = 3.0F;
-    private static final int DOWNED_HURT_OVERLAY_TICKS = 1;
-    private static final Map<Integer, Integer> ORIGINAL_HURT_TIMES = new HashMap<>();
-
     private SecondWindPlayerTimers() {
-    }
-
-    @SubscribeEvent
-    public static void onRenderLivingPre(RenderLivingEvent.Pre<?, ?> event) {
-        if (!(event.getEntity() instanceof Player player) || !ClientTrackedDownedPlayers.isDowned(player.getId())) {
-            return;
-        }
-
-        ORIGINAL_HURT_TIMES.putIfAbsent(player.getId(), player.hurtTime);
-        player.hurtTime = Math.max(player.hurtTime, DOWNED_HURT_OVERLAY_TICKS);
-    }
-
-    @SubscribeEvent
-    public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
-        if (!(event.getEntity() instanceof Player player)) {
-            return;
-        }
-
-        Integer originalHurtTime = ORIGINAL_HURT_TIMES.remove(player.getId());
-        if (originalHurtTime != null) {
-            player.hurtTime = originalHurtTime;
-        }
     }
 
     @SubscribeEvent

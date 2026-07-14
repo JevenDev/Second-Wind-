@@ -24,6 +24,8 @@ public record ResolvedEntityPolicy(
         int cooldownTicks,
         boolean showTimer,
         boolean announce,
+        String downedMessageTranslationKey,
+        String downedMessageFallback,
         ResourceLocation pose) {
 
     public CompoundTag save() {
@@ -47,6 +49,8 @@ public record ResolvedEntityPolicy(
         tag.putInt("Cooldown", cooldownTicks);
         tag.putBoolean("ShowTimer", showTimer);
         tag.putBoolean("Announce", announce);
+        tag.putString("DownedMessageTranslationKey", downedMessageTranslationKey);
+        if (downedMessageFallback != null) tag.putString("DownedMessageFallback", downedMessageFallback);
         tag.putString("Pose", pose.toString());
         return tag;
     }
@@ -72,6 +76,8 @@ public record ResolvedEntityPolicy(
                 tag.getInt("Cooldown"),
                 tag.getBoolean("ShowTimer"),
                 tag.getBoolean("Announce"),
-                ResourceLocation.parse(tag.getString("Pose")));
+                tag.contains("DownedMessageTranslationKey") ? tag.getString("DownedMessageTranslationKey") : "message.secondwind.entity_downed",
+                tag.contains("DownedMessageFallback") ? tag.getString("DownedMessageFallback") : null,
+                tag.contains("Pose") ? ResourceLocation.parse(tag.getString("Pose")) : ResourceLocation.fromNamespaceAndPath("secondwind", "sideways"));
     }
 }
