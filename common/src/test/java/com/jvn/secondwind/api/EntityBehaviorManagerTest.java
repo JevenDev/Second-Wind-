@@ -86,7 +86,9 @@ final class EntityBehaviorManagerTest {
                         """).getAsJsonObject());
 
         assertEquals(List.of(ResourceLocation.fromNamespaceAndPath("secondwind", "sideways")), definition.presentation().poses());
-        assertEquals("message.secondwind.entity_downed", definition.presentation().downedMessage().translationKey());
-        assertNull(definition.presentation().downedMessage().fallback());
+        assertEquals("%1$s was downed!", definition.presentation().downedMessage().text());
+        assertNull(definition.presentation().downedMessage().translationKey());
+        assertTrue(SecondWindApi.usesVanillaSwimmingPose(SecondWindApi.SWIMMING_POSE));
+        assertFalse(SecondWindApi.usesVanillaSwimmingPose(SecondWindApi.SIDEWAYS_POSE));
     }
 }

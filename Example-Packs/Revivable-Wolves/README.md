@@ -8,8 +8,8 @@ within 2.5 blocks can hold the interact button for 2 seconds to revive it with
 
 While downed, the wolf is rendered on its side with the persistent red damage
 overlay and announces `<wolf name> needs help!` in chat. The behavior JSON can
-switch the pose to `secondwind:upright`, disable the announcement, or replace
-its translation key and fallback text.
+switch the pose to `secondwind:upright` or `secondwind:swimming`, disable the announcement, or replace
+its announcement text without requiring a resource pack.
 
 Revived wolves receive 3 seconds of regeneration and 2 seconds of
 invulnerability. After revival, a wolf has a 5-minute Second Wind cooldown.

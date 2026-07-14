@@ -1,0 +1,9 @@
+{
+  "schema": "secondwind:chat_message_pool/v1",
+  "event": "revived/admin",
+  "priority": 0,
+  "messages": [
+    { "text": "%1$s had help from divine intervention!" },
+    { "text": "%1$s was given a second chance by the gods!" }
+  ]
+}

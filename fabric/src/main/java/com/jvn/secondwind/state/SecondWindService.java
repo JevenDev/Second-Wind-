@@ -1,6 +1,8 @@
 package com.jvn.secondwind.state;
 
 import com.jvn.secondwind.advancement.SecondWindCriteria;
+import com.jvn.secondwind.api.AnnouncementMessage;
+import com.jvn.secondwind.api.ChatMessageManager;
 import com.jvn.secondwind.config.CooldownMode;
 import com.jvn.secondwind.config.SecondWindConfig;
 import com.jvn.secondwind.network.SecondWindNetworking;
@@ -31,10 +33,6 @@ public final class SecondWindService {
     private static final int DOWNED_SLOWNESS_REFRESH_TICKS = 10;
     private static final int LAST_SECOND_REVIVE_TICKS = Math.max(1, TICKS_PER_SECOND / 10);
     private static final int REVIVE_HOLD_GRACE_TICKS = 2;
-    private static final int DOWNED_ANNOUNCEMENT_VARIANTS = 7;
-    private static final int PLAYER_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
-    private static final int KILL_REVIVE_ANNOUNCEMENT_VARIANTS = 7;
-    private static final int ADMIN_REVIVE_ANNOUNCEMENT_VARIANTS = 2;
     private static final double DOWNED_DAMAGE_KNOCKBACK_STRENGTH = 0.4D;
     private static final Vector3f REVIVE_PARTICLE_PURPLE = new Vector3f(0.73F, 0.42F, 0.98F);
     private static final Vector3f REVIVE_PARTICLE_WHITE = new Vector3f(0.98F, 0.96F, 1.0F);
@@ -461,10 +459,8 @@ public final class SecondWindService {
             return;
         }
 
-        int variant = player.getRandom().nextInt(DOWNED_ANNOUNCEMENT_VARIANTS);
-        Component message = chatAnnouncement("message.secondwind.downed." + variant, player)
-                .withStyle(ChatFormatting.RED);
-        player.server.getPlayerList().broadcastSystemMessage(message, false);
+        ChatMessageManager.select(ChatMessageManager.Event.DOWNED, player.getRandom())
+                .ifPresent(message -> broadcastChatAnnouncement(player, message, ChatFormatting.RED));
     }
 
     private static void announcePlayerRevived(ServerPlayer player, ReviveReason reason) {
@@ -472,25 +468,18 @@ public final class SecondWindService {
             return;
         }
 
-        int variantBound = switch (reason) {
-            case PLAYER_REVIVE -> PLAYER_REVIVE_ANNOUNCEMENT_VARIANTS;
-            case KILL -> KILL_REVIVE_ANNOUNCEMENT_VARIANTS;
-            case ADMIN -> ADMIN_REVIVE_ANNOUNCEMENT_VARIANTS;
+        ChatMessageManager.Event event = switch (reason) {
+            case PLAYER_REVIVE -> ChatMessageManager.Event.REVIVED_PLAYER;
+            case KILL -> ChatMessageManager.Event.REVIVED_KILL;
+            case ADMIN -> ChatMessageManager.Event.REVIVED_ADMIN;
         };
-        int variant = player.getRandom().nextInt(variantBound);
-        String reasonKey = switch (reason) {
-            case PLAYER_REVIVE -> "player_revive";
-            case KILL -> "kill";
-            case ADMIN -> "admin";
-        };
-        Component message = chatAnnouncement("message.secondwind.revived." + reasonKey + "." + variant, player)
-            .withStyle(ChatFormatting.GREEN);
-        player.server.getPlayerList().broadcastSystemMessage(message, false);
+        ChatMessageManager.select(event, player.getRandom())
+                .ifPresent(message -> broadcastChatAnnouncement(player, message, ChatFormatting.GREEN));
     }
 
-    private static MutableComponent chatAnnouncement(String key, ServerPlayer player) {
-        MutableComponent translated = Component.translatable(key, player.getDisplayName());
-        return SecondWindConfig.LOCALIZE_CHAT_MESSAGES.get() ? translated : Component.literal(translated.getString());
+    private static void broadcastChatAnnouncement(ServerPlayer player, AnnouncementMessage definition, ChatFormatting color) {
+        MutableComponent message = definition.render(player.getDisplayName(), SecondWindConfig.LOCALIZE_CHAT_MESSAGES.get());
+        player.server.getPlayerList().broadcastSystemMessage(message.withStyle(color), false);
     }
 
     private static void spawnRevivePopParticles(ServerPlayer player) {

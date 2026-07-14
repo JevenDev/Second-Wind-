@@ -1,0 +1,14 @@
+{
+  "schema": "secondwind:chat_message_pool/v1",
+  "event": "downed",
+  "priority": 0,
+  "messages": [
+    { "text": "%1$s was downed!" },
+    { "text": "%1$s is on timeout, but they're still hanging on!" },
+    { "text": "%1$s is down! Get to them!" },
+    { "text": "%1$s needs a hand, they're downed!" },
+    { "text": "%1$s is down! Help them up!" },
+    { "text": "%1$s is down! They can still be saved!" },
+    { "text": "%1$s is down! Don't let them go down for the count!" }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schema": "secondwind:chat_message_pool/v1",
+  "event": "revived/player_revive",
+  "priority": 0,
+  "messages": [
+    { "text": "%1$s is back up!" },
+    { "text": "%1$s got the pickup and is back in the fight!" },
+    { "text": "%1$s is back on their feet!" },
+    { "text": "%1$s got revived just in time!" },
+    { "text": "%1$s was restored to fighting shape!" },
+    { "text": "%1$s is back in action!" },
+    { "text": "%1$s is back in the game!" }
+  ]
+}

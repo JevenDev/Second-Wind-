@@ -2,6 +2,7 @@ package com.jvn.secondwind.common;
 
 import com.mojang.logging.LogUtils;
 import com.jvn.secondwind.api.EntityBehaviorManager;
+import com.jvn.secondwind.api.ChatMessageManager;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 
@@ -15,6 +16,7 @@ public final class SecondWindCommon {
     public static void init() {
         LOGGER.info("{} common scaffolding loaded.", MOD_ID);
         EntityBehaviorManager.register();
+        ChatMessageManager.register();
     }
 
     public static ResourceLocation id(String path) {

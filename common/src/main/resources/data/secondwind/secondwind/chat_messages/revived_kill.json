@@ -1,0 +1,14 @@
+{
+  "schema": "secondwind:chat_message_pool/v1",
+  "event": "revived/kill",
+  "priority": 0,
+  "messages": [
+    { "text": "%1$s fought their way back up!" },
+    { "text": "%1$s earned their second wind!" },
+    { "text": "%1$s came back from the edge!" },
+    { "text": "%1$s clawed their way back into the fight!" },
+    { "text": "%1$s was restored to fighting shape!" },
+    { "text": "%1$s is back in action!" },
+    { "text": "%1$s is back in the game!" }
+  ]
+}

@@ -7,6 +7,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
 public final class SecondWindApi {
+    public static final ResourceLocation SIDEWAYS_POSE = ResourceLocation.fromNamespaceAndPath("secondwind", "sideways");
+    public static final ResourceLocation UPRIGHT_POSE = ResourceLocation.fromNamespaceAndPath("secondwind", "upright");
+    public static final ResourceLocation SWIMMING_POSE = ResourceLocation.fromNamespaceAndPath("secondwind", "swimming");
+    static final ResourceLocation LEGACY_CRAWL_POSE = ResourceLocation.fromNamespaceAndPath("secondwind", "crawl");
     private static final Map<ResourceLocation, ExternalDownedEntityAdapter> EXTERNAL_ADAPTERS = new ConcurrentHashMap<>();
     private static volatile EntityRuntime runtime = EntityRuntime.NOOP;
 
@@ -39,6 +43,10 @@ public final class SecondWindApi {
 
     public static Optional<ResourceLocation> resolvePresentationPose(LivingEntity entity) {
         return EntityBehaviorManager.resolve(entity).flatMap(definition -> definition.selectPose(entity));
+    }
+
+    public static boolean usesVanillaSwimmingPose(ResourceLocation pose) {
+        return SWIMMING_POSE.equals(pose) || LEGACY_CRAWL_POSE.equals(pose);
     }
 
     public static void installRuntime(EntityRuntime implementation) {

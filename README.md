@@ -161,8 +161,7 @@ Second Wind does not enable any vanilla mob by default.
     "show_timer": true,
     "announce": true,
     "downed_message": {
-      "translate": "message.example.wolf_downed",
-      "fallback": "%1$s needs help!"
+      "text": "%1$s needs help!"
     },
     "poses": ["secondwind:sideways"]
   }
@@ -174,15 +173,41 @@ Second Wind does not enable any vanilla mob by default.
 win; exact entity targets win equal-priority ties over tags. Managed entities keep their remaining
 timer while unloaded and restore their captured AI, pickup, and pose state when revived.
 
-Entity announcements follow the global chat-message and localization settings. `downed_message`
-accepts either a translation-key string or an object with `translate` and an optional `fallback`;
-the entity display name is supplied as `%1$s`. Presentation defaults to `secondwind:sideways`, while
-packs can select `secondwind:upright`. Client mods can register any other pose ID with
+Entity announcements follow the global chat-message settings. `downed_message` accepts a
+`text` object, a translation-key string, or an object with `translate` and an optional `fallback`;
+the entity display name is supplied as `%1$s`. Text messages require no resource pack.
+Presentation defaults to `secondwind:sideways`, while packs can select
+`secondwind:upright` or the vanilla `secondwind:swimming` pose. Client mods can register any other pose ID with
 `SecondWindClientApi.registerPoseRenderer` and apply a custom model transform.
 
 Compatibility mods can instead declare an `external` lifecycle with an adapter ID. The owning mod
 then controls downing and recovery while Second Wind supplies tracking and player revive channels;
 external entities never receive a Second Wind bleedout timer.
+
+### Data-Driven Player Messages
+
+Player downed and revive announcement pools live under
+`data/<namespace>/secondwind/chat_messages/` and use `secondwind:chat_message_pool/v1`.
+
+```json
+{
+  "schema": "secondwind:chat_message_pool/v1",
+  "event": "downed",
+  "priority": 10,
+  "messages": [
+    { "text": "%1$s was knocked down!" },
+    { "text": "%1$s needs help!" }
+  ]
+}
+```
+
+Supported events are `downed`, `revived/player_revive`, `revived/kill`, and
+`revived/admin`. Only definitions at the highest priority for an event are used;
+files tied at that priority are merged into one random pool. Use priority `0` to
+extend the bundled messages or a higher priority to replace them. The player display
+name is supplied as `%1$s`, and the global chat setting still applies. Text entries
+are sent entirely from server data and require no resource pack. Translation-key strings
+and `{ "translate": "...", "fallback": "..." }` entries remain available when localization is desired.
 
 Servers can configure:
 

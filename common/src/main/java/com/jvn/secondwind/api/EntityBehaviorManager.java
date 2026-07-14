@@ -148,7 +148,7 @@ public final class EntityBehaviorManager extends SimpleJsonResourceReloadListene
                 optionalInt(revive, "cooldown_ticks", 0));
 
         JsonObject presentation = GsonHelper.getAsJsonObject(root, "presentation", new JsonObject());
-        EntityBehaviorDefinition.DownedMessage downedMessage = parseDownedMessage(presentation);
+        AnnouncementMessage downedMessage = parseDownedMessage(presentation);
         List<ResourceLocation> poses = new ArrayList<>();
         if (presentation.has("poses")) {
             JsonArray poseArray = GsonHelper.getAsJsonArray(presentation, "poses");
@@ -175,23 +175,11 @@ public final class EntityBehaviorManager extends SimpleJsonResourceReloadListene
                         poses));
     }
 
-    private static EntityBehaviorDefinition.DownedMessage parseDownedMessage(JsonObject presentation) {
+    private static AnnouncementMessage parseDownedMessage(JsonObject presentation) {
         if (!presentation.has("downed_message")) {
-            return new EntityBehaviorDefinition.DownedMessage("message.secondwind.entity_downed", null);
+            return AnnouncementMessage.text("%1$s was downed!");
         }
-
-        JsonElement message = presentation.get("downed_message");
-        if (message.isJsonPrimitive() && message.getAsJsonPrimitive().isString()) {
-            return new EntityBehaviorDefinition.DownedMessage(message.getAsString(), null);
-        }
-        if (!message.isJsonObject()) {
-            throw new IllegalArgumentException("downed_message must be a translation key or an object");
-        }
-
-        JsonObject object = message.getAsJsonObject();
-        String translationKey = GsonHelper.getAsString(object, "translate");
-        String fallback = object.has("fallback") ? GsonHelper.getAsString(object, "fallback") : null;
-        return new EntityBehaviorDefinition.DownedMessage(translationKey, fallback);
+        return AnnouncementMessage.parse(presentation.get("downed_message"), "downed_message");
     }
 
     private static Integer optionalInt(JsonObject json, String key, int minimum) {

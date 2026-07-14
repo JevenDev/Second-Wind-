@@ -79,10 +79,7 @@ public record EntityBehaviorDefinition(
             Integer cooldownTicks) {
     }
 
-    public record DownedMessage(String translationKey, String fallback) {
-    }
-
-    public record Presentation(boolean showTimer, boolean announce, DownedMessage downedMessage, List<ResourceLocation> poses) {
+    public record Presentation(boolean showTimer, boolean announce, AnnouncementMessage downedMessage, List<ResourceLocation> poses) {
         public Presentation {
             poses = List.copyOf(poses);
         }

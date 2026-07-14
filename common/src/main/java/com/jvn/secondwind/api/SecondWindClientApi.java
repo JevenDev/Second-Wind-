@@ -11,9 +11,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 public final class SecondWindClientApi {
-    public static final ResourceLocation SIDEWAYS_POSE = ResourceLocation.fromNamespaceAndPath("secondwind", "sideways");
-    public static final ResourceLocation UPRIGHT_POSE = ResourceLocation.fromNamespaceAndPath("secondwind", "upright");
-    private static final ResourceLocation LEGACY_CRAWL_POSE = ResourceLocation.fromNamespaceAndPath("secondwind", "crawl");
+    public static final ResourceLocation SIDEWAYS_POSE = SecondWindApi.SIDEWAYS_POSE;
+    public static final ResourceLocation UPRIGHT_POSE = SecondWindApi.UPRIGHT_POSE;
+    public static final ResourceLocation SWIMMING_POSE = SecondWindApi.SWIMMING_POSE;
     private static final DownedPoseRenderer SIDEWAYS_RENDERER =
             (entity, poseStack, partialTick) -> poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
     private static final Map<ResourceLocation, DownedPoseRenderer> POSE_RENDERERS = new ConcurrentHashMap<>();
@@ -22,7 +22,8 @@ public final class SecondWindClientApi {
     static {
         POSE_RENDERERS.put(SIDEWAYS_POSE, SIDEWAYS_RENDERER);
         POSE_RENDERERS.put(UPRIGHT_POSE, (entity, poseStack, partialTick) -> {});
-        POSE_RENDERERS.put(LEGACY_CRAWL_POSE, (entity, poseStack, partialTick) -> {});
+        POSE_RENDERERS.put(SWIMMING_POSE, (entity, poseStack, partialTick) -> {});
+        POSE_RENDERERS.put(SecondWindApi.LEGACY_CRAWL_POSE, (entity, poseStack, partialTick) -> {});
     }
 
     private SecondWindClientApi() {

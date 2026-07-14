@@ -30,8 +30,7 @@
     "show_timer": true,
     "announce": true,
     "downed_message": {
-      "translate": "message.secondwind_examples.wolf_downed",
-      "fallback": "%1$s needs help!"
+      "text": "%1$s needs help!"
     },
     "poses": [
       "secondwind:sideways"

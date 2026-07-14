@@ -2,6 +2,7 @@ package com.jvn.secondwind.state;
 
 import com.jvn.secondwind.api.EntityBehaviorDefinition;
 import com.jvn.secondwind.api.EntityBehaviorManager;
+import com.jvn.secondwind.api.AnnouncementMessage;
 import com.jvn.secondwind.api.ExternalDownedEntityAdapter;
 import com.jvn.secondwind.api.ResolvedEntityPolicy;
 import com.jvn.secondwind.api.SecondWindApi;
@@ -221,6 +222,7 @@ public final class SecondWindEntityService {
         ResolvedEntityPolicy policy = state.policy();
         if (policy != null && policy.blockHealing()) entity.setHealth(1.0F); else entity.setHealth(Math.max(1.0F, entity.getHealth()));
         entity.stopUsingItem(); entity.fallDistance = 0.0F;
+        if (policy != null && SecondWindApi.usesVanillaSwimmingPose(policy.pose())) entity.setPose(Pose.SWIMMING);
         if (entity instanceof Mob mob && policy != null && policy.disableAi()) { mob.getNavigation().stop(); mob.setTarget(null); mob.setNoAi(true); mob.setCanPickUpLoot(false); }
     }
 
@@ -236,7 +238,7 @@ public final class SecondWindEntityService {
                 ? (SecondWindConfig.DOWNED_DAMAGE_REGISTERS.get() ? EntityBehaviorDefinition.Downed.DamageMode.NORMAL_AND_REDUCE_TIMER : EntityBehaviorDefinition.Downed.DamageMode.REDUCE_TIMER)
                 : (SecondWindConfig.DOWNED_DAMAGE_REGISTERS.get() ? EntityBehaviorDefinition.Downed.DamageMode.NORMAL : EntityBehaviorDefinition.Downed.DamageMode.IGNORE);
         ResourceLocation pose = definition.selectPose(entity).orElse(ResourceLocation.fromNamespaceAndPath("secondwind", "sideways"));
-        EntityBehaviorDefinition.DownedMessage message = definition.presentation().downedMessage();
+        AnnouncementMessage message = definition.presentation().downedMessage();
         return new ResolvedEntityPolicy(definition.id(), definition.lifecycle().type(), definition.lifecycle().adapter(),
                 value(downed.timerTicks(), SecondWindConfig.DOWNED_TIMER_SECONDS.get() * 20), value(downed.minimumTimerTicks(), SecondWindConfig.MINIMUM_DOWNED_TIMER_SECONDS.get() * 20),
                 value(downed.penaltyPerDownTicks(), SecondWindConfig.TIMER_PENALTY_PER_DOWN.get() * 20), downed.damageMode() == null ? defaultDamage : downed.damageMode(),
@@ -247,15 +249,14 @@ public final class SecondWindEntityService {
                 value(revive.invulnerabilityTicks(), SecondWindConfig.POST_REVIVE_INVULNERABILITY_SECONDS.get() * 20),
                 value(revive.cooldownTicks(), SecondWindConfig.COOLDOWN_MODE.get() == CooldownMode.NONE ? 0 : SecondWindConfig.COOLDOWN_DURATION_SECONDS.get() * 20),
                 definition.presentation().showTimer(), definition.presentation().announce(),
-                message.translationKey(), message.fallback(), pose);
+                message.translationKey(), message.fallback(), message.text(), pose);
     }
 
     private static void announceEntityDowned(LivingEntity entity, ResolvedEntityPolicy policy) {
         if (policy == null || !policy.announce() || !SecondWindConfig.ENABLE_CHAT_MESSAGES.get() || entity.getServer() == null) return;
-        MutableComponent translated = Component.translatableWithFallback(
-                policy.downedMessageTranslationKey(), policy.downedMessageFallback(), entity.getDisplayName());
-        MutableComponent message = SecondWindConfig.LOCALIZE_CHAT_MESSAGES.get()
-                ? translated : Component.literal(translated.getString());
+        AnnouncementMessage definition = new AnnouncementMessage(
+                policy.downedMessageTranslationKey(), policy.downedMessageFallback(), policy.downedMessageText());
+        MutableComponent message = definition.render(entity.getDisplayName(), SecondWindConfig.LOCALIZE_CHAT_MESSAGES.get());
         entity.getServer().getPlayerList().broadcastSystemMessage(message.withStyle(ChatFormatting.RED), false);
     }
 
