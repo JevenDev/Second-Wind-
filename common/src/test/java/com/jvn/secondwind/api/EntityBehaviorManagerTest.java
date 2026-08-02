@@ -68,6 +68,15 @@ final class EntityBehaviorManagerTest {
     }
 
     @Test
+    void externalReviveControlExposesConfiguredOutcomesByDefault() {
+        ExternalReviveControl control = new ExternalReviveControl() {};
+
+        assertEquals(7.5D, control.reviveHealthOverride(null, null, 7.5F).orElseThrow());
+        assertTrue(control.applyConfiguredRegeneration(null, null, 40));
+        assertFalse(control.applyConfiguredRegeneration(null, null, 0));
+    }
+
+    @Test
     void rejectsPlayersAndInconsistentTimers() {
         assertThrows(IllegalArgumentException.class, () -> EntityBehaviorManager.parse(
                 ResourceLocation.fromNamespaceAndPath("test", "player"),

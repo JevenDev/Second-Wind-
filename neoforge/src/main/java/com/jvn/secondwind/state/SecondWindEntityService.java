@@ -4,6 +4,7 @@ import com.jvn.secondwind.api.EntityBehaviorDefinition;
 import com.jvn.secondwind.api.EntityBehaviorManager;
 import com.jvn.secondwind.api.AnnouncementMessage;
 import com.jvn.secondwind.api.ExternalDownedEntityAdapter;
+import com.jvn.secondwind.api.ExternalReviveControl;
 import com.jvn.secondwind.api.ResolvedEntityPolicy;
 import com.jvn.secondwind.api.SecondWindApi;
 import com.jvn.secondwind.config.CooldownMode;
@@ -12,6 +13,7 @@ import com.jvn.secondwind.network.SecondWindNetworking;
 import com.jvn.secondwind.util.SecondWindDamageSources;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.ChatFormatting;
@@ -249,8 +251,25 @@ public final class SecondWindEntityService {
 
     private static boolean completeRevive(ServerPlayer reviver, LivingEntity target, SecondWindEntityState state, ResolvedEntityPolicy policy) {
         if (policy.lifecycle() == EntityBehaviorDefinition.Lifecycle.Type.EXTERNAL) {
-            boolean recovered = SecondWindApi.externalAdapter(policy.adapter()).map(adapter -> adapter.revive(reviver, target)).orElse(false);
+            ExternalDownedEntityAdapter adapter = SecondWindApi.externalAdapter(policy.adapter()).orElse(null);
+            if (adapter == null) return false;
+            ExternalReviveControl control = adapter instanceof ExternalReviveControl found ? found : null;
+            OptionalDouble healthOverride = control == null
+                    ? OptionalDouble.empty()
+                    : control.reviveHealthOverride(reviver, target, policy.reviveHealth());
+            boolean applyRegeneration = control != null
+                    && control.applyConfiguredRegeneration(reviver, target, policy.regenerationTicks());
+            boolean recovered = adapter.revive(reviver, target);
             if (!recovered) return false;
+            if (healthOverride.isPresent()) {
+                double requestedHealth = healthOverride.getAsDouble();
+                if (Double.isFinite(requestedHealth)) {
+                    target.setHealth(Math.min(target.getMaxHealth(), Math.max(1.0F, (float) requestedHealth)));
+                }
+            }
+            if (applyRegeneration && policy.regenerationTicks() > 0) {
+                target.addEffect(new MobEffectInstance(MobEffects.REGENERATION, policy.regenerationTicks(), 1));
+            }
             clearExternalState(target, state);
         } else {
             restoreManagedState(target, state);
