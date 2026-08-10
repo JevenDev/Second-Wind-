@@ -10,6 +10,7 @@ public final class SecondWindData {
             AttachmentRegistry.create(ResourceLocation.fromNamespaceAndPath(SecondWindMod.MOD_ID, "player_state"),
                     builder -> builder
                             .initializer(SecondWindPlayerState::new)
+                            .copyOnDeath()
                             .persistent(SecondWindPlayerState.CODEC));
 
     public static final AttachmentType<SecondWindEntityState> ENTITY_STATE =
