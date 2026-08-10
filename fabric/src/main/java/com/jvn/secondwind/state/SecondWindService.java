@@ -574,7 +574,7 @@ public final class SecondWindService {
     }
 
     private static void clearDownedMobilityEffects(ServerPlayer player) {
-        player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        // Let the short refresh expire so vanilla can reveal any pre-existing hidden Slowness effect.
         if (SecondWindConfig.FORCE_CRAWLING_POSE.get()) {
             player.setPose(Pose.STANDING);
         }
