@@ -280,8 +280,9 @@ public final class SecondWindService {
         resetCooldownForNewDayIfNeeded(player);
         return switch (SecondWindConfig.COOLDOWN_MODE.get()) {
             case NONE -> false;
-            case TIMED -> state.getCooldownExpiresEpochMillis() > System.currentTimeMillis()
-                    || state.getCooldownExpiresGameTime() > player.serverLevel().getGameTime();
+            case TIMED -> state.getCooldownExpiresEpochMillis() > 0L
+                    ? state.getCooldownExpiresEpochMillis() > System.currentTimeMillis()
+                    : state.getCooldownExpiresGameTime() > player.serverLevel().getGameTime();
             case MC_DAY -> state.hasConsumedToday() && state.getLastMcDayUsed() == currentMcDay(player);
             case ON_SLEEP -> state.hasConsumedSinceSleep();
         };
@@ -292,9 +293,12 @@ public final class SecondWindService {
         return switch (SecondWindConfig.COOLDOWN_MODE.get()) {
             case NONE -> 0;
             case TIMED -> {
-                long millisRemaining = Math.max(0L, state.getCooldownExpiresEpochMillis() - System.currentTimeMillis());
+                if (state.getCooldownExpiresEpochMillis() > 0L) {
+                    long millisRemaining = Math.max(0L, state.getCooldownExpiresEpochMillis() - System.currentTimeMillis());
+                    yield (int) ((millisRemaining + 999L) / 1000L);
+                }
                 long ticksRemaining = Math.max(0L, state.getCooldownExpiresGameTime() - player.serverLevel().getGameTime());
-                yield (int) Math.max((millisRemaining + 999L) / 1000L, (ticksRemaining + TICKS_PER_SECOND - 1L) / TICKS_PER_SECOND);
+                yield (int) ((ticksRemaining + TICKS_PER_SECOND - 1L) / TICKS_PER_SECOND);
             }
             case MC_DAY -> isCooldownActive(player)
                     ? (int) (Math.max(1L, TICKS_PER_MC_DAY - player.serverLevel().getDayTime() % TICKS_PER_MC_DAY) / TICKS_PER_SECOND)
