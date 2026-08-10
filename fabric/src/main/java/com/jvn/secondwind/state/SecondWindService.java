@@ -187,6 +187,7 @@ public final class SecondWindService {
                 && !reviver.isSpectator()
                 && !isDowned(reviver)
                 && isDowned(downedPlayer)
+                && reviver.hasLineOfSight(downedPlayer)
                 && isWithinReviveDistance(reviver, downedPlayer);
     }
 

@@ -155,6 +155,7 @@ public final class SecondWindEntityService {
         if (reviver == target || reviver.isCreative() || reviver.isSpectator() || SecondWindService.isDowned(reviver)) return false;
         SecondWindEntityState state = getState(target);
         ResolvedEntityPolicy policy = state.policy();
+        if (!reviver.hasLineOfSight(target)) return false;
         if (!state.isDowned() || policy == null || !policy.reviveEnabled()
                 || reviver.distanceToSqr(target) > policy.reviveDistance() * policy.reviveDistance()) return false;
         if (policy.lifecycle() == EntityBehaviorDefinition.Lifecycle.Type.EXTERNAL) {

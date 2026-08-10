@@ -116,6 +116,7 @@ public final class SecondWindEntityService {
         if (target instanceof ServerPlayer player) return SecondWindService.canPlayerRevive(reviver, player);
         if (reviver == target || reviver.isCreative() || reviver.isSpectator() || SecondWindService.isDowned(reviver)) return false;
         SecondWindEntityState state = getState(target); ResolvedEntityPolicy policy = state.policy();
+        if (!reviver.hasLineOfSight(target)) return false;
         if (!state.isDowned() || policy == null || !policy.reviveEnabled() || reviver.distanceToSqr(target) > policy.reviveDistance() * policy.reviveDistance()) return false;
         return policy.lifecycle() != EntityBehaviorDefinition.Lifecycle.Type.EXTERNAL
                 || SecondWindApi.externalAdapter(policy.adapter()).map(adapter -> adapter.canRevive(reviver, target)).orElse(false);
