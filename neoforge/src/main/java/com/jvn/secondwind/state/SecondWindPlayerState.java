@@ -28,6 +28,7 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
     private long reviveChannelLastHoldGameTime;
     private transient DamageSource originalDownedDamageSource;
     private String originalDownedDeathMessage;
+    private boolean forcedCrawlingPoseApplied;
 
     public boolean isDowned() {
         return downed;
@@ -143,6 +144,14 @@ public final class SecondWindPlayerState implements INBTSerializable<CompoundTag
 
     public void setPendingUnsafeExitCooldown(boolean pendingUnsafeExitCooldown) {
         this.pendingUnsafeExitCooldown = pendingUnsafeExitCooldown;
+    }
+
+    public boolean hasForcedCrawlingPoseApplied() {
+        return forcedCrawlingPoseApplied;
+    }
+
+    public void setForcedCrawlingPoseApplied(boolean forcedCrawlingPoseApplied) {
+        this.forcedCrawlingPoseApplied = forcedCrawlingPoseApplied;
     }
 
     public Optional<UUID> getReviveChannelReviver() {

@@ -555,8 +555,13 @@ public final class SecondWindService {
                     false));
         }
 
+        SecondWindPlayerState state = getState(player);
         if (SecondWindConfig.FORCE_CRAWLING_POSE.get()) {
             player.setForcedPose(Pose.SWIMMING);
+            state.setForcedCrawlingPoseApplied(true);
+        } else if (state.hasForcedCrawlingPoseApplied()) {
+            player.setForcedPose(null);
+            state.setForcedCrawlingPoseApplied(false);
         }
         player.setSprinting(false);
         player.fallDistance = 0.0F;
@@ -571,8 +576,10 @@ public final class SecondWindService {
 
     private static void clearDownedMobilityEffects(ServerPlayer player) {
         // Let the short refresh expire so vanilla can reveal any pre-existing hidden Slowness effect.
-        if (SecondWindConfig.FORCE_CRAWLING_POSE.get()) {
+        SecondWindPlayerState state = getState(player);
+        if (state.hasForcedCrawlingPoseApplied()) {
             player.setForcedPose(null);
+            state.setForcedCrawlingPoseApplied(false);
         }
         player.setSprinting(false);
     }
