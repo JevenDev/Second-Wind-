@@ -308,6 +308,9 @@ public final class SecondWindService {
     }
 
     public static void resetCooldownForSleep(ServerPlayer player) {
+        if (SecondWindConfig.COOLDOWN_MODE.get() != CooldownMode.ON_SLEEP) {
+            return;
+        }
         SecondWindPlayerState state = getState(player);
         state.setConsumedSinceSleep(false);
         state.setCooldownExpiresGameTime(0L);

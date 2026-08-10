@@ -9,7 +9,10 @@ import com.jvn.secondwind.state.SecondWindPlayerState;
 import com.jvn.secondwind.state.SecondWindService;
 import com.jvn.secondwind.state.SecondWindEntityService;
 import com.jvn.secondwind.util.SecondWindEntityRules;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -28,6 +31,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
 public final class SecondWindServerEvents {
+    private static final Map<UUID, Long> SLEEP_START_DAYS = new ConcurrentHashMap<>();
+
     private SecondWindServerEvents() {
     }
 
@@ -40,6 +45,7 @@ public final class SecondWindServerEvents {
             SecondWindNetworking.syncToPlayer(player);
         });
         ServerPlayerEvents.LEAVE.register(player -> {
+            SLEEP_START_DAYS.remove(player.getUUID());
             if (SecondWindService.isDowned(player)) {
                 SecondWindService.markUnsafeExitWhileDowned(player);
             }
@@ -78,12 +84,24 @@ public final class SecondWindServerEvents {
             return InteractionResult.PASS;
         });
         UseItemCallback.EVENT.register(SecondWindServerEvents::useItem);
-        EntitySleepEvents.STOP_SLEEPING.register((entity, sleepingPos) -> {
+        EntitySleepEvents.START_SLEEPING.register((entity, sleepingPos) -> {
             if (entity instanceof ServerPlayer player) {
-                SecondWindService.resetCooldownForSleep(player);
-                SecondWindNetworking.syncToPlayer(player);
+                SLEEP_START_DAYS.put(player.getUUID(), currentMcDay(player));
             }
         });
+        EntitySleepEvents.STOP_SLEEPING.register((entity, sleepingPos) -> {
+            if (entity instanceof ServerPlayer player) {
+                Long startDay = SLEEP_START_DAYS.remove(player.getUUID());
+                if (startDay != null && currentMcDay(player) > startDay) {
+                    SecondWindService.resetCooldownForSleep(player);
+                    SecondWindNetworking.syncToPlayer(player);
+                }
+            }
+        });
+    }
+
+    private static long currentMcDay(ServerPlayer player) {
+        return player.serverLevel().getDayTime() / SecondWindService.TICKS_PER_MC_DAY;
     }
 
     private static InteractionResultHolder<ItemStack> useItem(net.minecraft.world.entity.player.Player player, net.minecraft.world.level.Level level, InteractionHand hand) {
