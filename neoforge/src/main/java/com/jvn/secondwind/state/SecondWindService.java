@@ -139,7 +139,9 @@ public final class SecondWindService {
         player.setHealth(1.0F);
         player.invulnerableTime = 0;
         if (!player.hurt(damageSource, Float.MAX_VALUE)) {
-            player.kill();
+            // Bypass a canceled incoming-damage event without bypassing the player death lifecycle.
+            player.setHealth(0.0F);
+            player.die(damageSource);
         }
         SecondWindNetworking.syncToPlayer(player);
     }

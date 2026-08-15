@@ -137,6 +137,10 @@ public final class SecondWindServerEvents {
     }
 
     private static void afterDeath(LivingEntity entity, DamageSource source) {
+        if (entity instanceof ServerPlayer player && SecondWindService.isDowned(player)) {
+            SecondWindService.failDowned(player, FailureReason.INVALID_STATE);
+        }
+
         handleKillToRevive(entity, source);
     }
 

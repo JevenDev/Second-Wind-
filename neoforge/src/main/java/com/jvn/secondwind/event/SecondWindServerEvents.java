@@ -18,6 +18,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -37,9 +38,12 @@ public final class SecondWindServerEvents {
     private SecondWindServerEvents() {
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public static void onLivingDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
+            if (event.isCanceled()) {
+                return;
+            }
             if (SecondWindEntityService.tryDownFromDeath(event.getEntity(), event.getSource())) {
                 event.setCanceled(true);
                 return;
@@ -49,9 +53,20 @@ public final class SecondWindServerEvents {
         }
 
         SecondWindPlayerState state = SecondWindService.getState(player);
-        if (state.isForcedDeathFlow() || state.isDowned()) {
-            triggerFinishHim(event, player, state);
+        if (state.isForcedDeathFlow()) {
+            event.setCanceled(false);
             handleKillToRevive(event);
+            return;
+        }
+        if (state.isDowned()) {
+            triggerFinishHim(event, player, state);
+            SecondWindService.failDowned(player, FailureReason.INVALID_STATE);
+            event.setCanceled(false);
+            handleKillToRevive(event);
+            return;
+        }
+
+        if (event.isCanceled()) {
             return;
         }
 
@@ -63,6 +78,14 @@ public final class SecondWindServerEvents {
         event.setCanceled(true);
         SecondWindService.down(player, event.getSource());
         handleDowningToRevive(player, event.getSource());
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
+    public static void onForcedLivingDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && SecondWindService.getState(player).isForcedDeathFlow()) {
+            event.setCanceled(false);
+        }
     }
 
     private static void handleKillToRevive(LivingDeathEvent event) {
