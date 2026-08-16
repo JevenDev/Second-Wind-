@@ -152,7 +152,7 @@ public final class SecondWindEntityService {
 
     public static boolean canPlayerRevive(ServerPlayer reviver, LivingEntity target) {
         if (target instanceof ServerPlayer player) return SecondWindService.canPlayerRevive(reviver, player);
-        if (reviver == target || reviver.isCreative() || reviver.isSpectator() || SecondWindService.isDowned(reviver)) return false;
+        if (reviver == target || reviver.isSpectator() || SecondWindService.isDowned(reviver)) return false;
         SecondWindEntityState state = getState(target);
         ResolvedEntityPolicy policy = state.policy();
         if (!reviver.hasLineOfSight(target)) return false;

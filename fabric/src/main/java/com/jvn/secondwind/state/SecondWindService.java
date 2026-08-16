@@ -183,7 +183,6 @@ public final class SecondWindService {
     public static boolean canPlayerRevive(ServerPlayer reviver, ServerPlayer downedPlayer) {
         return SecondWindConfig.MULTIPLAYER_REVIVE.get()
                 && reviver != downedPlayer
-                && !reviver.isCreative()
                 && !reviver.isSpectator()
                 && !isDowned(reviver)
                 && isDowned(downedPlayer)

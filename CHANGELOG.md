@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.1.1 - 2026-08-16
+
+### Changed
+
+- Changed timed cooldowns to use wall-clock time so they continue to expire while the server is stopped
+- Changed Creative-mode players to be able to revive downed players and entities
+
+### Fixed
+
+- Fixed Fabric player state being lost across respawns
+- Fixed sleep-based cooldowns resetting when a player left a bed without completing the night
+- Fixed reviving a player removing Slowness effects that existed before they were downed
+- Fixed NeoForge clearing forced poses that were not applied by Second Wind
+- Fixed revive channels continuing without server-validated line of sight to the target
+- Fixed downed players not completing the correct death lifecycle when killed
+- Fixed forced deaths being blocked by canceled NeoForge death or damage events
+
 ## 1.1.0 - 2026-07-13
 
 ### Added
